@@ -11,7 +11,7 @@ interface Review {
   comment: string;
 }
 
-interface ProdDocument extends Document {
+export interface ProdDocument extends Document {
   name: string;
   description: string;
   price: number;
