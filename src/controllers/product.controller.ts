@@ -1,11 +1,13 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import Product, { ProdDocument } from "../model/product.model";
+import { ErrorHandler } from "../utils/errorHandler";
 
 //create product
 //admin route
 export const createProduct = async (
   req: Request,
-  resp: Response
+  resp: Response,
+  next: NextFunction
 ): Promise<void> => {
   try {
     const productDetail: ProdDocument = req.body;
@@ -18,8 +20,8 @@ export const createProduct = async (
       !productDetail.category ||
       !productDetail.stock
     ) {
-      resp.status(400).send({ error: "Missing required fields" });
-      return;
+        return next(new ErrorHandler("missing required fields", 404))
+       
     }
 
     const product = await Product.create(productDetail);
@@ -53,27 +55,31 @@ export const getAllProducts = async (
 };
 
 //get single product
-export const getProductById = async (req: Request, resp: Response): Promise<void> => {
-    try {
-      const { id } = req.params;
-  
-      const product = await Product.findById(id);
-  
-      if (!product) {
-        resp.status(404).send({ message: 'Product not found' });
-        return;
-      }
-  
-      resp.status(200).send({ product });
-    } catch (error: any) {
-      resp.status(500).send({ error: error.message });
+export const getProductById = async (
+  req: Request,
+  resp: Response,
+  next : NextFunction
+): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    const product = await Product.findById(id);
+
+    if (!product) {
+      return next(new ErrorHandler("Product not found", 404))
     }
-  };
+
+    resp.status(200).send({ product });
+  } catch (error: any) {
+    resp.status(500).send({ error: error.message });
+  }
+};
 
 // Update product function
 export const updateProduct = async (
   req: Request,
-  resp: Response
+  resp: Response,
+  next : NextFunction
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -85,8 +91,8 @@ export const updateProduct = async (
     });
 
     if (!product) {
-      resp.status(404).send({ message: "Product not found" });
-      return;
+        return next(new ErrorHandler("Product not found", 404))
+
     }
 
     resp
@@ -100,7 +106,8 @@ export const updateProduct = async (
 //delete product api
 export const deleteProduct = async (
   req: Request,
-  resp: Response
+  resp: Response,
+  next : NextFunction
 ): Promise<void> => {
   try {
     const { id } = req.params;
@@ -108,8 +115,8 @@ export const deleteProduct = async (
     const product = await Product.findByIdAndDelete(id);
 
     if (!product) {
-      resp.status(404).send({ message: "Product not found" });
-      return;
+        return next(new ErrorHandler("Product not found", 404))
+
     }
 
     resp.status(200).send({
@@ -120,6 +127,3 @@ export const deleteProduct = async (
     resp.status(500).send({ error: error.message });
   }
 };
-
-
-
