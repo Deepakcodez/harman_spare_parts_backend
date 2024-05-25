@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import Product from '../model/product.model';
 import { ErrorHandler } from '../utils/errorHandler';
+import { APIfeature } from '../utils/APIfeature';
 
 // Create a new product
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
@@ -19,7 +20,9 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 
 // Get all products
 export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
-  const products = await Product.find();
+
+  const ApiFeature = new APIfeature(Product.find(),req.query).search()
+  const products = await ApiFeature.query;
 
   if (products.length === 0) {
     throw new ErrorHandler('No products found', 404);
