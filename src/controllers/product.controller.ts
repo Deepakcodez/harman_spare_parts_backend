@@ -1,129 +1,81 @@
-import { NextFunction, Request, Response } from "express";
-import Product, { ProdDocument } from "../model/product.model";
-import { ErrorHandler } from "../utils/errorHandler";
+import { Request, Response } from 'express';
+import Product from '../model/product.model';
+import { ErrorHandler } from '../utils/errorHandler';
 
-//create product
-//admin route
-export const createProduct = async (
-  req: Request,
-  resp: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const productDetail: ProdDocument = req.body;
-
-    // Validate the required fields
-    if (
-      !productDetail.name ||
-      !productDetail.description ||
-      !productDetail.price ||
-      !productDetail.category ||
-      !productDetail.stock
-    ) {
-        return next(new ErrorHandler("missing required fields", 404))
-       
-    }
-
-    const product = await Product.create(productDetail);
-    resp.status(201).send({
-      product,
-      message: "Product created successfully",
-      success: true,
-    });
-  } catch (error: any) {
-    resp.status(500).send({ error: error.message });
+// Create a new product
+export const createProduct = async (req: Request, res: Response): Promise<void> => {
+  const productDetail = req.body;
+ console.log('>>>>>>>>>>>',productDetail)
+  if (!productDetail.name || !productDetail.price) {
+    throw new ErrorHandler('Name and price are required', 400);
   }
+
+  const product = await Product.create(productDetail);
+  res.status(201).json({
+    success: true,
+    product,
+  });
 };
 
-//get all product
-export const getAllProducts = async (
-  req: Request,
-  resp: Response
-): Promise<void> => {
-  try {
-    const products = await Product.find();
+// Get all products
+export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
+  const products = await Product.find();
 
-    if (products.length === 0) {
-      resp.status(404).send({ message: "No products found" });
-      return;
-    }
-
-    resp.status(200).send({ products });
-  } catch (error: any) {
-    resp.status(500).send({ error: error.message });
+  if (products.length === 0) {
+    throw new ErrorHandler('No products found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    products,
+  });
 };
 
-//get single product
-export const getProductById = async (
-  req: Request,
-  resp: Response,
-  next : NextFunction
-): Promise<void> => {
-  try {
-    const { id } = req.params;
+// Update a product
+export const updateProduct = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
+  const productDetail = req.body;
 
-    const product = await Product.findById(id);
+  const product = await Product.findByIdAndUpdate(id, productDetail, { new: true, runValidators: true });
 
-    if (!product) {
-      return next(new ErrorHandler("Product not found", 404))
-    }
-
-    resp.status(200).send({ product });
-  } catch (error: any) {
-    resp.status(500).send({ error: error.message });
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    product,
+  });
 };
 
-// Update product function
-export const updateProduct = async (
-  req: Request,
-  resp: Response,
-  next : NextFunction
-): Promise<void> => {
-  try {
-    const { id } = req.params;
-    const productDetail = req.body;
+// Delete a product
+export const deleteProduct = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
 
-    const product = await Product.findByIdAndUpdate(id, productDetail, {
-      new: true,
-      runValidators: true,
-    });
+  const product = await Product.findByIdAndDelete(id);
 
-    if (!product) {
-        return next(new ErrorHandler("Product not found", 404))
-
-    }
-
-    resp
-      .status(200)
-      .send({ product, message: "Product details updated", success: true });
-  } catch (error: any) {
-    resp.status(500).send({ error: error.message });
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    message: 'Product deleted successfully',
+  });
 };
 
-//delete product api
-export const deleteProduct = async (
-  req: Request,
-  resp: Response,
-  next : NextFunction
-): Promise<void> => {
-  try {
-    const { id } = req.params;
+// Get a single product
+export const getProduct = async (req: Request, res: Response): Promise<void> => {
+  const { id } = req.params;
 
-    const product = await Product.findByIdAndDelete(id);
+  const product = await Product.findById(id);
 
-    if (!product) {
-        return next(new ErrorHandler("Product not found", 404))
-
-    }
-
-    resp.status(200).send({
-      product,
-      message: "Product deleted successfully",
-    });
-  } catch (error: any) {
-    resp.status(500).send({ error: error.message });
+  if (!product) {
+    throw new ErrorHandler('Product not found', 404);
   }
+
+  res.status(200).json({
+    success: true,
+    product,
+  });
 };

@@ -2,6 +2,15 @@ import express, { request, response } from "express";
 const app = express();
 const PORT = 8000;
 import { connectDB } from "./utils/dbConnection";
+import errorMiddleware from "./middleware/error"
+
+
+//handling uncaught error
+process.on("uncaughtException", (err)=>{
+    console.log('>>>>>>>>>>>Error', err.message)
+    console.log('>>>>>>>>>>>shutting own server due to uncaughtException promise')
+    process.exit(1);
+})
 
 //connecting database
 connectDB();
@@ -19,10 +28,20 @@ import productRouter from './routers/product.router';
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/product", productRouter);
 
+app.use(errorMiddleware)
 
 
 
 
-app.listen(PORT,()=>{
+const server = app.listen(PORT,()=>{
     console.log(`server is running at port ${PORT}`)
 })
+
+//Handling unhandled promise
+process.on("unhandledRejection",(err:any)=>{
+    console.log('>>>>>>>>>>>Error', err.message)
+    console.log('>>>>>>>>>>>shutting own server due to unhandle promise')
+    server.close(()=>{
+        process.exit(1);
+    });
+});

@@ -1,16 +1,20 @@
 import { Request, Response, NextFunction } from 'express';
 import { ErrorHandler } from '../utils/errorHandler';
 
-const error = (err: ErrorHandler, req: Request, res: Response, next: NextFunction): void => {
-  err.statusCode = err.statusCode || 500;
-  err.message = err.message || 'Internal Server Error';
+const errorMiddleware = (err: ErrorHandler, req: Request, res: Response, next: NextFunction): void => {
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal Server Error';
 
-  res.status(err.statusCode).json({
+
+  if(err.name == "CastError"){
+    const CastErrorMessage = `Resource not found ${err.name}`
+    err = new ErrorHandler(CastErrorMessage, 400);
+  }
+
+  res.status(statusCode).json({
     success: false,
-    error: {
-      message: err.message,
-    },
+    message: err.message,
   });
 };
 
-export default error;
+export default errorMiddleware;
