@@ -21,7 +21,10 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 // Get all products
 export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
 
-  const ApiFeature = new APIfeature(Product.find(),req.query).search()
+  const resultperPage:number = 2;
+  
+  const ApiFeature = new APIfeature(Product.find(),req.query).search().filter().pagination(resultperPage)
+  
   const products = await ApiFeature.query;
 
   if (products.length === 0) {
