@@ -1,10 +1,9 @@
+import 'dotenv/config'
 import express, { request, response } from "express";
 const app = express();
-const PORT = 8000;
 import { connectDB } from "./utils/dbConnection";
 import errorMiddleware from "./middleware/error"
-
-
+const PORT = process.env.PORT ||8000;
 //handling uncaught error
 process.on("uncaughtException", (err)=>{
     console.log('>>>>>>>>>>>Error', err.message)

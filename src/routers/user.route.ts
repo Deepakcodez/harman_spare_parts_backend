@@ -1,9 +1,10 @@
 import express,{request,response} from "express";
-import { demo } from "../controllers/user.controller";
+import { register, } from "../controllers/user.controller";
+import asyncHandler from "../middleware/asyncHandler";
 const router = express.Router();
 
 
-router.route('/demo').get(demo)
+router.post('/register', asyncHandler(register));
 
 
 

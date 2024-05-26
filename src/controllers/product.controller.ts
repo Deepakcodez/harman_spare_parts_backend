@@ -22,6 +22,8 @@ export const createProduct = async (req: Request, res: Response): Promise<void> 
 export const getAllProducts = async (req: Request, res: Response): Promise<void> => {
 
   const resultperPage:number = 2;
+
+  const productCount = await Product.countDocuments();
   
   const ApiFeature = new APIfeature(Product.find(),req.query).search().filter().pagination(resultperPage)
   
@@ -34,6 +36,7 @@ export const getAllProducts = async (req: Request, res: Response): Promise<void>
   res.status(200).json({
     success: true,
     products,
+    productCount
   });
 };
 
