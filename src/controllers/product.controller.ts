@@ -5,6 +5,7 @@ import { APIfeature } from '../utils/APIfeature';
 
 // Create a new product
 export const createProduct = async (req: Request, res: Response): Promise<void> => {
+  req.body.user = req.user?.id;
   const productDetail = req.body;
  console.log('>>>>>>>>>>>',productDetail)
   if (!productDetail.name || !productDetail.price) {

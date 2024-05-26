@@ -8,7 +8,7 @@ interface Avatar {
   url: string;
 }
 
-interface UserDocument extends Document {
+export interface UserDocument extends Document {
   name: string;
   email: string;
   password: string;
@@ -17,6 +17,7 @@ interface UserDocument extends Document {
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   getJWTToken: () => string;
+  comparePassword: (enteredPassword: string) => Promise<boolean>;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -38,6 +39,7 @@ const userSchema = new Schema<UserDocument>(
       type: String,
       minlength: [6, "Password must be at least 6 characters"],
       required: [true, "Please enter a password"],
+      select: false,
     },
     avatar: {
       public_id: {
@@ -68,10 +70,13 @@ userSchema.pre<UserDocument>("save", async function (next) {
 });
 
 userSchema.methods.getJWTToken = function (): string {
-  console.log('>>>>>>>>>>>',  process.env.JWT_SECRET)
   return jwt.sign({ id: this._id }, process.env.JWT_SECRET as string, {
     expiresIn: process.env.JWT_EXPIRE,
   });
+};
+
+userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
+  return await bcrypt.compare(enteredPassword, this.password);
 };
 
 const User: Model<UserDocument> = mongoose.model<UserDocument>("User", userSchema);

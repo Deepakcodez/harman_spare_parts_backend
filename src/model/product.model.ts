@@ -10,8 +10,11 @@ interface Review {
   rating: number;
   comment: string;
 }
+interface UserReference {
+  user: mongoose.Types.ObjectId;
+}
 
-export interface ProdDocument extends Document {
+export interface ProdDocument extends Document,UserReference {
   name: string;
   description: string;
   price: number;
@@ -83,6 +86,12 @@ const productSchema = new Schema<ProdDocument>(
         },
       },
     ],
+    user:{
+      type : mongoose.Schema.ObjectId,
+      ref : "User",
+      required : true,
+
+    }
   },
   { timestamps: true }
 );

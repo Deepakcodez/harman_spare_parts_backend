@@ -1,10 +1,12 @@
 import { Request, Response } from "express";
 import { ErrorHandler } from "../utils/errorHandler";
 import User from "../model/user.model";
+import { sendToken } from "../utils/JWTtoken";
 
-export const register = async (req: Request, res: Response): Promise<void> => {
+
+// register user
+export const register = async (req: Request, resp: Response): Promise<void> => {
   const { name, email, password } = req.body;
-  console.log(">>>>>>>>>>>", name);
   if (!name || !email || !password) {
     throw new ErrorHandler("User credentials are not provided", 400);
   }
@@ -18,11 +20,30 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     },
   });
    
-  const token = user.getJWTToken();
+  sendToken(user,200,resp)
 
-  res.status(201).json({
-    success: true,
-    user,
-    token,
-  });
+};
+
+
+
+//login user
+export const login = async (req: Request, resp: Response): Promise<void> => {
+  const {  email, password } = req.body;
+  if ( !email || !password) {
+    throw new ErrorHandler("User credentials are not provided", 400);
+  }
+  
+  const user = await User.findOne({email}).select("+password");
+  
+  if(!user){
+    throw new ErrorHandler("User credentials are not provided", 401);
+  }
+
+  const isPasswordMatched = await user.comparePassword(password);
+
+  if(!isPasswordMatched){
+    throw new ErrorHandler("User credentials are not correct", 401);
+  }
+   
+ sendToken(user,200,resp)
 };

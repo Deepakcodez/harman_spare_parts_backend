@@ -1,6 +1,7 @@
 import 'dotenv/config'
 import express, { request, response } from "express";
 const app = express();
+import cookieParser from 'cookie-parser'
 import { connectDB } from "./utils/dbConnection";
 import errorMiddleware from "./middleware/error"
 const PORT = process.env.PORT ||8000;
@@ -16,7 +17,7 @@ connectDB();
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
+app.use(cookieParser())
 //routers
 import userRouter from './routers/user.route';
 import productRouter from './routers/product.router';
