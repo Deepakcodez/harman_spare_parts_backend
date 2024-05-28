@@ -2,7 +2,6 @@ import nodemailer from "nodemailer";
 
 export const sendEmail = async (options: { email: string, subject: string, message: string }): Promise<void> => {
 
-    console.log('>>>>>>>>>>>', process.env.SMPT_PASSWORD)
     const transporter = nodemailer.createTransport({
       service: process.env.SMPT_SERVICE,
       auth: {
