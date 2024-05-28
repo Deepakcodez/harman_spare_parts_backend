@@ -1,5 +1,5 @@
 import express,{request,response} from "express";
-import { forgetpassword, getUserDetails, login, register, resetPassword, updatePassword, } from "../controllers/user.controller";
+import { forgetpassword, getUserDetails, login, register, resetPassword, updatePassword, updateProfile, } from "../controllers/user.controller";
 import asyncHandler from "../middleware/asyncHandler";
 import { isAuthenticatedUser, logout } from "../middleware/auth";
 const router = express.Router();
@@ -12,6 +12,7 @@ router.post('/forgetPassword',isAuthenticatedUser, asyncHandler(forgetpassword))
 router.put('/password/reset/:token',isAuthenticatedUser, asyncHandler(resetPassword));
 router.get('/detail', isAuthenticatedUser, asyncHandler(getUserDetails));
 router.post('/update/password', isAuthenticatedUser, asyncHandler(updatePassword));
+router.post('/update/profile', isAuthenticatedUser, asyncHandler(updateProfile));
 
 
 

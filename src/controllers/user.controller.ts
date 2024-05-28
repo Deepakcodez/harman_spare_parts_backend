@@ -133,15 +133,17 @@ export const resetPassword = asyncHandler(
   }
 );
 
-
 //get user
-export const getUserDetails = async (req: Request, resp: Response,next:NextFunction): Promise<void> => {
-
+export const getUserDetails = async (
+  req: Request,
+  resp: Response,
+  next: NextFunction
+): Promise<void> => {
   const user = await User.findById(req.user?.id);
 
   if (!user) {
-     return next(new ErrorHandler('user not found', 404))
-    }
+    return next(new ErrorHandler("user not found", 404));
+  }
 
   resp.status(200).json({
     success: true,
@@ -149,33 +151,61 @@ export const getUserDetails = async (req: Request, resp: Response,next:NextFunct
   });
 };
 
-
-
-
 //update password
-export const updatePassword = async (req: Request, resp: Response,next:NextFunction): Promise<void> => {
-
+export const updatePassword = async (
+  req: Request,
+  resp: Response,
+  next: NextFunction
+): Promise<void> => {
   const user = await User.findById(req.user?.id).select("+password");
 
   if (!user) {
-    return next(new ErrorHandler('user not found', 400)) ;
+    return next(new ErrorHandler("user not found", 400));
   }
 
   const isPasswordMatched = await user?.comparePassword(req.body.oldPassword);
 
-
   if (!isPasswordMatched) {
-    return next(new ErrorHandler('Old Password is incorrect', 400)) ;
+    return next(new ErrorHandler("Old Password is incorrect", 400));
   }
 
   if (req.body.newPassword !== req.body.confirmNewPassword) {
-    return next(new ErrorHandler('New password are mismatched', 400)) ;
+    return next(new ErrorHandler("New password are mismatched", 400));
   }
 
   user.password = req.body.newPassword;
 
-  await user.save()
+  await user.save();
 
   sendToken(user, 200, resp);
+};
 
+//update Profile
+export const updateProfile = async (
+  req: Request,
+  resp: Response,
+  next: NextFunction
+): Promise<void> => {
+  const newUserData = {
+    name: req.body.name,
+    email: req.body.email,
+  };
+
+  //add cloudinary later
+
+  const user = await User.findByIdAndUpdate(req.user?.id, newUserData, {
+    new: true,
+    runValidators: false,
+  });
+
+  if (!user) {
+    return next(new ErrorHandler("user not found", 400));
+  }
+
+  const updatedUser = await user.save();
+
+  resp.status(200).json({
+    success: true,
+    updatedUser,
+  });
 };
