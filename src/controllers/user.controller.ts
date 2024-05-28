@@ -135,16 +135,47 @@ export const resetPassword = asyncHandler(
 
 
 //get user
-export const getUserDetails = async (req: Request, res: Response): Promise<void> => {
+export const getUserDetails = async (req: Request, resp: Response,next:NextFunction): Promise<void> => {
 
   const user = await User.findById(req.user?.id);
 
   if (!user) {
-    throw new ErrorHandler('user not found', 404);
-  }
+     return next(new ErrorHandler('user not found', 404))
+    }
 
-  res.status(200).json({
+  resp.status(200).json({
     success: true,
     user,
   });
+};
+
+
+
+
+//update password
+export const updatePassword = async (req: Request, resp: Response,next:NextFunction): Promise<void> => {
+
+  const user = await User.findById(req.user?.id).select("+password");
+
+  if (!user) {
+    return next(new ErrorHandler('user not found', 400)) ;
+  }
+
+  const isPasswordMatched = await user?.comparePassword(req.body.oldPassword);
+
+
+  if (!isPasswordMatched) {
+    return next(new ErrorHandler('Old Password is incorrect', 400)) ;
+  }
+
+  if (req.body.newPassword !== req.body.confirmNewPassword) {
+    return next(new ErrorHandler('New password are mismatched', 400)) ;
+  }
+
+  user.password = req.body.newPassword;
+
+  await user.save()
+
+  sendToken(user, 200, resp);
+
 };
