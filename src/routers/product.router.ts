@@ -5,10 +5,10 @@ import { authorizedRole, isAuthenticatedUser } from '../middleware/auth';
 
 const router = express.Router();
 
-router.post('/create', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(createProduct));
+router.post('/admin/create', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(createProduct));
 router.get('/allProducts',isAuthenticatedUser, asyncHandler(getAllProducts));
-router.put('/update/:id',  isAuthenticatedUser, authorizedRole("admin"), asyncHandler(updateProduct));
-router.delete('/delete/:id',  isAuthenticatedUser, authorizedRole("admin") ,asyncHandler(deleteProduct));
+router.put('/admin/update/:id',  isAuthenticatedUser, authorizedRole("admin"), asyncHandler(updateProduct));
+router.delete('/admin/delete/:id',  isAuthenticatedUser, authorizedRole("admin") ,asyncHandler(deleteProduct));
 router.get('/product/:id', asyncHandler(getProduct));
 
 export default router;

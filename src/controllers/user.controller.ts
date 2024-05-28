@@ -43,7 +43,7 @@ export const login = async (
   const user = await User.findOne({ email }).select("+password");
 
   if (!user) {
-    throw new ErrorHandler("User credentials are not provided", 401);
+    throw new ErrorHandler("user not found", 401);
   }
 
   const isPasswordMatched = await user.comparePassword(password);
@@ -134,78 +134,102 @@ export const resetPassword = asyncHandler(
 );
 
 //get user
-export const getUserDetails = async (
-  req: Request,
-  resp: Response,
-  next: NextFunction
-): Promise<void> => {
-  const user = await User.findById(req.user?.id);
+export const getUserDetails = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const user = await User.findById(req.user?.id);
 
-  if (!user) {
-    return next(new ErrorHandler("user not found", 404));
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
   }
-
-  resp.status(200).json({
-    success: true,
-    user,
-  });
-};
+);
 
 //update password
-export const updatePassword = async (
-  req: Request,
-  resp: Response,
-  next: NextFunction
-): Promise<void> => {
-  const user = await User.findById(req.user?.id).select("+password");
+export const updatePassword = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const user = await User.findById(req.user?.id).select("+password");
 
-  if (!user) {
-    return next(new ErrorHandler("user not found", 400));
+    if (!user) {
+      return next(new ErrorHandler("User not found", 400));
+    }
+
+    const isPasswordMatched = await user.comparePassword(req.body.oldPassword);
+
+    if (!isPasswordMatched) {
+      return next(new ErrorHandler("Old password is incorrect", 400));
+    }
+
+    if (req.body.newPassword !== req.body.confirmNewPassword) {
+      return next(new ErrorHandler("New passwords do not match", 400));
+    }
+
+    user.password = req.body.newPassword;
+    await user.save();
+
+    sendToken(user, 200, res);
   }
-
-  const isPasswordMatched = await user?.comparePassword(req.body.oldPassword);
-
-  if (!isPasswordMatched) {
-    return next(new ErrorHandler("Old Password is incorrect", 400));
-  }
-
-  if (req.body.newPassword !== req.body.confirmNewPassword) {
-    return next(new ErrorHandler("New password are mismatched", 400));
-  }
-
-  user.password = req.body.newPassword;
-
-  await user.save();
-
-  sendToken(user, 200, resp);
-};
+);
 
 //update Profile
-export const updateProfile = async (
-  req: Request,
-  resp: Response,
-  next: NextFunction
-): Promise<void> => {
-  const newUserData = {
-    name: req.body.name,
-    email: req.body.email,
-  };
+export const updateProfile = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const newUserData = {
+      name: req.body.name,
+      email: req.body.email,
+    };
 
-  //add cloudinary later
+    // Add cloudinary later
 
-  const user = await User.findByIdAndUpdate(req.user?.id, newUserData, {
-    new: true,
-    runValidators: false,
-  });
+    const user = await User.findByIdAndUpdate(req.user?.id, newUserData, {
+      new: true,
+      runValidators: true,
+      context: "query",
+    });
 
-  if (!user) {
-    return next(new ErrorHandler("user not found", 400));
+    if (!user) {
+      return next(new ErrorHandler("User not found", 400));
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
   }
+);
 
-  const updatedUser = await user.save();
+// Get all products
+export const getAllUsers = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const user = await User.find();
 
-  resp.status(200).json({
-    success: true,
-    updatedUser,
-  });
-};
+    if (user.length === 0) {
+      return next(new ErrorHandler("No products found", 404));
+    }
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  }
+);
+
+export const getSingleUser = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+
+    res.status(200).json({
+      success: true,
+      user,
+    });
+  }
+);
