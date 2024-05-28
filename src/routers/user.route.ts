@@ -1,3 +1,4 @@
+import { deleteUserprofile, updateUserProfile } from './../controllers/user.controller';
 import express,{request,response} from "express";
 import { forgetpassword, getAllUsers, getSingleUser, getUserDetails, login, register, resetPassword, updatePassword, updateProfile, } from "../controllers/user.controller";
 import asyncHandler from "../middleware/asyncHandler";
@@ -15,6 +16,8 @@ router.post('/admin/update/password', isAuthenticatedUser, asyncHandler(updatePa
 router.post('/admin/update/profile', isAuthenticatedUser, asyncHandler(updateProfile));
 router.get('/admin/users', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(getAllUsers));
 router.get('/admin/user/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(getSingleUser));
+router.get('/admin/update/detail/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(updateUserProfile));
+router.get('/admin/delete/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(deleteUserprofile));
 
 
 
