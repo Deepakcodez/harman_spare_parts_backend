@@ -132,3 +132,19 @@ export const resetPassword = asyncHandler(
     sendToken(user, 200, resp);
   }
 );
+
+
+//get user
+export const getUserDetails = async (req: Request, res: Response): Promise<void> => {
+
+  const user = await User.findById(req.user?.id);
+
+  if (!user) {
+    throw new ErrorHandler('user not found', 404);
+  }
+
+  res.status(200).json({
+    success: true,
+    user,
+  });
+};

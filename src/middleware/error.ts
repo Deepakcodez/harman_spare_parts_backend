@@ -31,23 +31,17 @@ const errorMiddleware = (
     err = new ErrorHandler(duplicateKeyMessage, 400);
   }
 
-  
   // json web toke error
-  if (err.name ==="jsonWebToken") {
-    
+  if (err.name === "jsonWebToken") {
     const Message = `Json web token is Invalid`;
     err = new ErrorHandler(Message, 400);
   }
-
 
   // token expied error
-  if (err.name ==="TokenExpiredError") {
-    
+  if (err.name === "TokenExpiredError") {
     const Message = `Json web token is Invalid`;
     err = new ErrorHandler(Message, 400);
   }
-
-
 
   // Update status code and message from the modified error
   statusCode = err.statusCode || statusCode;
