@@ -16,8 +16,8 @@ router.post('/admin/update/password', isAuthenticatedUser, asyncHandler(updatePa
 router.post('/admin/update/profile', isAuthenticatedUser, asyncHandler(updateProfile));
 router.get('/admin/users', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(getAllUsers));
 router.get('/admin/user/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(getSingleUser));
-router.get('/admin/update/detail/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(updateUserProfile));
-router.get('/admin/delete/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(deleteUserprofile));
+router.put('/admin/update/detail/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(updateUserProfile));
+router.delete('/admin/delete/:id', isAuthenticatedUser, authorizedRole("admin"), asyncHandler(deleteUserprofile));
 
 
 

@@ -5,8 +5,9 @@ interface Image {
   url: string;
 }
 
-interface Review {
-  name: string;
+export interface Review  {
+  user: mongoose.Types.ObjectId;
+  name: string | undefined;
   rating: number;
   comment: string;
 }
@@ -14,11 +15,11 @@ interface UserReference {
   user: mongoose.Types.ObjectId;
 }
 
-export interface ProdDocument extends Document,UserReference {
+export interface ProdDocument extends Document, UserReference {
   name: string;
   description: string;
   price: number;
-  rating: number;
+  ratings: number;
   images: Image[];
   category: string;
   stock: number;
@@ -41,7 +42,7 @@ const productSchema = new Schema<ProdDocument>(
       type: Number,
       required: [true, "please enter product price"],
     },
-    rating: {
+    ratings: {
       type: Number,
       default: 0,
     },
@@ -72,6 +73,11 @@ const productSchema = new Schema<ProdDocument>(
     },
     reviews: [
       {
+        user: {
+          type: mongoose.Schema.ObjectId,
+          ref: "User",
+          required: true,
+        },
         name: {
           type: String,
           required: true,
@@ -86,16 +92,18 @@ const productSchema = new Schema<ProdDocument>(
         },
       },
     ],
-    user:{
-      type : mongoose.Schema.ObjectId,
-      ref : "User",
-      required : true,
-
-    }
+    user: {
+      type: mongoose.Schema.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );
 
-const Product: Model<ProdDocument> = mongoose.model<ProdDocument>("Product", productSchema);
+const Product: Model<ProdDocument> = mongoose.model<ProdDocument>(
+  "Product",
+  productSchema
+);
 
 export default Product;

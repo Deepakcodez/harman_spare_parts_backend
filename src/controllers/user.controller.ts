@@ -246,9 +246,8 @@ export const updateUserProfile = asyncHandler(
       role : req.body.role
     };
 
-    // Add cloudinary later
 
-    const user = await User.findByIdAndUpdate(req.user?.id, newUserData, {
+    const user = await User.findByIdAndUpdate(req.params?.id, newUserData, {
       new: true,
       runValidators: true,
       context: "query",
