@@ -21,12 +21,14 @@ app.use(cookieParser())
 //routers
 import userRouter from './routers/user.route';
 import productRouter from './routers/product.router';
+import orderRouter from './routers/order.route';
 
 
 
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/product", productRouter);
+app.use("/api/v1/order", orderRouter);
 
 app.use(errorMiddleware)
 

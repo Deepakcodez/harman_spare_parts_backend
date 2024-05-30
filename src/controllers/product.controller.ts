@@ -1,8 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import Product, { Review } from "../model/product.model";
+import Product, { Review, } from "../model/product.model";
 import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
+import mongoose from "mongoose";
 
 // Create a new product
 export const createProduct = asyncHandler(
@@ -154,3 +155,79 @@ export const createProductReview = asyncHandler(
     });
   }
 );
+
+
+//get all reviews
+export const productAllReview = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return next(new ErrorHandler("Product not found", 404));
+    }
+  
+    res.status(200).json({
+      success: true,
+      reviews : product.reviews,
+    });
+  }
+);
+
+
+
+
+
+
+
+//delete review
+// export const deleteReview = asyncHandler(
+//   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+
+//     const reviewId:string|undefined = req.query.id?.toString();
+
+//     const product = await Product.findById(req.query.id);
+
+//     if (!product) {
+//       return next(new ErrorHandler("Product not found", 404));
+//     }
+
+//     const reviews = product.reviews.filter(
+//       (rev) => (rev._id as mongoose.Types.ObjectId).toString() !== reviewId
+//     );
+
+//     let avg = 0;
+
+//     reviews.forEach((rev) => {
+//       avg += rev.rating;
+//     });
+
+//     let ratings = 0;
+
+//     if (reviews.length === 0) {
+//       ratings = 0;
+//     } else {
+//       ratings = avg / reviews.length;
+//     }
+
+//     const numOfReviews = reviews.length;
+
+//     await Product.findByIdAndUpdate(
+//       req.query.productId,
+//       {
+//         reviews,
+//         ratings,
+//         numOfReviews,
+//       },
+//       {
+//         new: true,
+//         runValidators: true,
+//         useFindAndModify: false,
+//       }
+//     );
+
+//     res.status(200).json({
+//       success: true,
+//       message: 'Review deleted successfully',
+//     });
+//   }
+// );

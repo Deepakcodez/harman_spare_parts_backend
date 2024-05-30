@@ -6,11 +6,13 @@ interface Image {
 }
 
 export interface Review  {
+  // _id:   mongoose.Types.ObjectId | undefined; 
   user: mongoose.Types.ObjectId;
   name: string | undefined;
   rating: number;
   comment: string;
 }
+
 interface UserReference {
   user: mongoose.Types.ObjectId;
 }
