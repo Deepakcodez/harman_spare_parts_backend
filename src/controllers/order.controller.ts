@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import asyncHandler from "../middleware/asyncHandler";
 import Order from '../model/order.model';
+import { ErrorHandler } from '../utils/errorHandler';
 
 
 // Create new Order
@@ -30,6 +31,38 @@ export const newOrder = asyncHandler(async (req :Request, res:Response, next:Nex
     res.status(201).json({
       success: true,
       order,
+    });
+  });
+  
+
+  // get Single Order
+export const getSingleOrder = asyncHandler(async (req:Request, res:Response, next:NextFunction) => {
+    const order = await Order.findById(req.params.id).populate(
+      "user",
+      "name email"
+    );
+  
+    if (!order) {
+      return next(new ErrorHandler("Order not found with this Id", 404));
+    }
+  
+    res.status(200).json({
+      success: true,
+      order,
+    });
+  });
+  
+
+
+  // get logged in user  Orders
+  export const myOrders = asyncHandler(async (req:Request, res:Response, next:NextFunction) => {
+    const orders = await Order.find({ user: req.user?._id });
+    
+
+  
+    res.status(200).json({
+      success: true,
+      orders,
     });
   });
   
