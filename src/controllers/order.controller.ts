@@ -73,7 +73,7 @@ export const getSingleOrder = asyncHandler(async (req:Request, res:Response, nex
 export const getAllOrders = asyncHandler(async (req:Request, res:Response, next:NextFunction):Promise<void> => {
     const orders = await Order.find();
   
-    let totalAmount = 0;
+    let totalAmount:number = 0;
   
     orders.forEach((order) => {
       totalAmount += order.totalPrice;
@@ -86,3 +86,20 @@ export const getAllOrders = asyncHandler(async (req:Request, res:Response, next:
     });
   });
   
+
+  
+// delete Order -- Admin
+export const deleteOrder =  asyncHandler(async (req:Request, res:Response, next:NextFunction):Promise<void> => {
+    const order = await Order.findByIdAndDelete(req.params.id);
+  
+    if (!order) {
+      return next(new ErrorHandler("Order not found with this Id", 404));
+    }
+  
+  
+    res.status(200).json({
+      success: true,
+      message : "Order removed",
+      order
+    });
+  });
