@@ -5,7 +5,7 @@ import { ErrorHandler } from '../utils/errorHandler';
 
 
 // Create new Order
-export const newOrder = asyncHandler(async (req :Request, res:Response, next:NextFunction) => {
+export const newOrder = asyncHandler(async (req :Request, res:Response, next:NextFunction):Promise<void> => {
     const {
       shippingInfo,
       orderItems,
@@ -36,7 +36,7 @@ export const newOrder = asyncHandler(async (req :Request, res:Response, next:Nex
   
 
   // get Single Order
-export const getSingleOrder = asyncHandler(async (req:Request, res:Response, next:NextFunction) => {
+export const getSingleOrder = asyncHandler(async (req:Request, res:Response, next:NextFunction):Promise<void> => {
     const order = await Order.findById(req.params.id).populate(
       "user",
       "name email"
@@ -55,13 +55,33 @@ export const getSingleOrder = asyncHandler(async (req:Request, res:Response, nex
 
 
   // get logged in user  Orders
-  export const myOrders = asyncHandler(async (req:Request, res:Response, next:NextFunction) => {
+  export const myOrders = asyncHandler(async (req:Request, res:Response, next:NextFunction):Promise<void> => {
     const orders = await Order.find({ user: req.user?._id });
     
 
   
     res.status(200).json({
       success: true,
+      orders,
+    });
+  });
+  
+
+
+  
+// get all Orders -- Admin
+export const getAllOrders = asyncHandler(async (req:Request, res:Response, next:NextFunction):Promise<void> => {
+    const orders = await Order.find();
+  
+    let totalAmount = 0;
+  
+    orders.forEach((order) => {
+      totalAmount += order.totalPrice;
+    });
+  
+    res.status(200).json({
+      success: true,
+      totalAmount,
       orders,
     });
   });
