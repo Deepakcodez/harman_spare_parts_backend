@@ -1,0 +1,24 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const user_controller_1 = require("./../controllers/user.controller");
+const express_1 = __importDefault(require("express"));
+const user_controller_2 = require("../controllers/user.controller");
+const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
+const auth_1 = require("../middleware/auth");
+const router = express_1.default.Router();
+router.post('/register', (0, asyncHandler_1.default)(user_controller_2.register));
+router.post('/login', (0, asyncHandler_1.default)(user_controller_2.login));
+router.get('/logout', (0, asyncHandler_1.default)(auth_1.logout));
+router.post('/forgetPassword', auth_1.isAuthenticatedUser, (0, asyncHandler_1.default)(user_controller_2.forgetpassword));
+router.put('/password/reset/:token', auth_1.isAuthenticatedUser, (0, asyncHandler_1.default)(user_controller_2.resetPassword));
+router.get('/detail', auth_1.isAuthenticatedUser, (0, asyncHandler_1.default)(user_controller_2.getUserDetails));
+router.post('/admin/update/password', auth_1.isAuthenticatedUser, (0, asyncHandler_1.default)(user_controller_2.updatePassword));
+router.post('/admin/update/profile', auth_1.isAuthenticatedUser, (0, asyncHandler_1.default)(user_controller_2.updateProfile));
+router.get('/admin/users', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), (0, asyncHandler_1.default)(user_controller_2.getAllUsers));
+router.get('/admin/user/:id', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), (0, asyncHandler_1.default)(user_controller_2.getSingleUser));
+router.put('/admin/update/detail/:id', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), (0, asyncHandler_1.default)(user_controller_1.updateUserProfile));
+router.delete('/admin/delete/:id', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), (0, asyncHandler_1.default)(user_controller_1.deleteUserprofile));
+exports.default = router;
