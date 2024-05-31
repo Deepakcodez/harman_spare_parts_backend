@@ -1,5 +1,5 @@
 import 'dotenv/config'
-import express, { request, response } from "express";
+import express, { Request, Response } from "express";
 const app = express();
 import cookieParser from 'cookie-parser'
 import { connectDB } from "./utils/dbConnection";
@@ -24,7 +24,9 @@ import productRouter from './routers/product.router';
 import orderRouter from './routers/order.route';
 
 
-
+app.get('/', (req:Request, res:Response) => {
+    res.send('Hello World!')
+  })
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/product", productRouter);

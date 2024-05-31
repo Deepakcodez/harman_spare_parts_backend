@@ -25,6 +25,9 @@ app.use((0, cookie_parser_1.default)());
 const user_route_1 = __importDefault(require("./routers/user.route"));
 const product_router_1 = __importDefault(require("./routers/product.router"));
 const order_route_1 = __importDefault(require("./routers/order.route"));
+app.get('/', (req, res) => {
+    res.send('Hello World!');
+});
 app.use("/api/v1/user", user_route_1.default);
 app.use("/api/v1/product", product_router_1.default);
 app.use("/api/v1/order", order_route_1.default);
