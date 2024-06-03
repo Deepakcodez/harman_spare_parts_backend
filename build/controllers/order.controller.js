@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteOrder = exports.getAllOrders = exports.myOrders = exports.getSingleOrder = exports.newOrder = void 0;
+exports.updateOrder = exports.deleteOrder = exports.getAllOrders = exports.myOrders = exports.getSingleOrder = exports.newOrder = void 0;
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const order_model_1 = __importDefault(require("../model/order.model"));
 const errorHandler_1 = require("../utils/errorHandler");
+const product_model_1 = __importDefault(require("../model/product.model"));
 // Create new Order
 exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -81,3 +82,39 @@ exports.deleteOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(
         order
     });
 }));
+// update Order Status -- Admin
+exports.updateOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const order = yield order_model_1.default.findById(req.params.id);
+    if (!order) {
+        return next(new errorHandler_1.ErrorHandler("Order not found with this Id", 404));
+    }
+    if (order.orderStatus === "Delivered") {
+        return next(new errorHandler_1.ErrorHandler("You have already delivered this order", 400));
+    }
+    if (req.body.status === "Shipped") {
+        order.orderItems.forEach((o) => __awaiter(void 0, void 0, void 0, function* () {
+            yield updateStock(o.product.toString(), o.quantity);
+        }));
+    }
+    order.orderStatus = req.body.status;
+    if (req.body.status === "Delivered") {
+        order.deliveredAt = new Date();
+    }
+    yield order.save({ validateBeforeSave: false });
+    res.status(200).json({
+        success: true,
+        message: "Order updated",
+    });
+}));
+function updateStock(id, quantity) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const product = yield product_model_1.default.findById(id);
+        if (product) {
+            product.stock -= quantity;
+            yield product.save({ validateBeforeSave: false });
+        }
+        else {
+            throw new errorHandler_1.ErrorHandler("Product not found", 404);
+        }
+    });
+}

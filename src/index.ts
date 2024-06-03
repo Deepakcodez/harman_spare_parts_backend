@@ -1,7 +1,8 @@
 import 'dotenv/config'
 import express, { Request, Response } from "express";
 const app = express();
-import cookieParser from 'cookie-parser'
+import cookieParser from 'cookie-parser';
+import cors from 'cors'
 import { connectDB } from "./utils/dbConnection";
 import errorMiddleware from "./middleware/error"
 const PORT = process.env.PORT ||8000;
@@ -15,6 +16,15 @@ process.on("uncaughtException", (err)=>{
 //connecting database
 connectDB();
 
+
+// Middlewares
+const corsOptions = {
+    origin: ['http://localhost:3000', 'https://harman-spare-part.vercel.app/'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    optionsSuccessStatus: 204,
+  };
+  app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser())

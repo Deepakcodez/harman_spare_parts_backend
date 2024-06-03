@@ -7,6 +7,7 @@ require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const cors_1 = __importDefault(require("cors"));
 const dbConnection_1 = require("./utils/dbConnection");
 const error_1 = __importDefault(require("./middleware/error"));
 const PORT = process.env.PORT || 8000;
@@ -18,6 +19,14 @@ process.on("uncaughtException", (err) => {
 });
 //connecting database
 (0, dbConnection_1.connectDB)();
+// Middlewares
+const corsOptions = {
+    origin: ['http://localhost:3000', 'https://harman-spare-part.vercel.app/'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+    optionsSuccessStatus: 204,
+};
+app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
