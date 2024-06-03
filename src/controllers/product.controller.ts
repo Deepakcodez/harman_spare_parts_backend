@@ -28,7 +28,7 @@ export const createProduct = asyncHandler(
 // Get all products
 export const getAllProducts = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const resultPerPage: number = 2;
+    const resultPerPage: number = 20;
 
     const productCount = await Product.countDocuments();
 
