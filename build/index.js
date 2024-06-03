@@ -21,7 +21,7 @@ process.on("uncaughtException", (err) => {
 (0, dbConnection_1.connectDB)();
 // Middlewares
 const corsOptions = {
-    origin: ['http://localhost:3000', 'https://harman-spare-part.vercel.app/'],
+    origin: ['https://harman-spare-part.vercel.app/', 'http://localhost:3000'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
     optionsSuccessStatus: 204,
