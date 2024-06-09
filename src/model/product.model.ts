@@ -76,6 +76,7 @@ const productSchema = new Schema<ProdDocument>(
     },
     isFreeDelivery: {
       type: Boolean,
+      required: true,
       default: true,
     },
     reviews: [
