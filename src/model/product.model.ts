@@ -27,6 +27,7 @@ export interface ProdDocument extends Document, UserReference {
   stock: number;
   numberOfReviews: number;
   reviews: Review[];
+  isFreeDelivery : boolean;
 }
 
 const productSchema = new Schema<ProdDocument>(
@@ -72,6 +73,10 @@ const productSchema = new Schema<ProdDocument>(
     numberOfReviews: {
       type: Number,
       default: 0,
+    },
+    isFreeDelivery: {
+      type: Boolean,
+      default: true,
     },
     reviews: [
       {
