@@ -67,6 +67,11 @@ const productSchema = new mongoose_1.Schema({
         type: Number,
         default: 0,
     },
+    isFreeDelivery: {
+        type: Boolean,
+        required: true,
+        default: true,
+    },
     reviews: [
         {
             user: {
