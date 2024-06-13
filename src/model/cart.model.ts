@@ -17,7 +17,7 @@ interface UserReference {
   user: mongoose.Types.ObjectId;
 }
 
-export interface ProdDocument extends Document, UserReference {
+export interface CartDocument extends Document, UserReference {
   name: string;
   description: string;
   price: number;
@@ -31,7 +31,7 @@ export interface ProdDocument extends Document, UserReference {
   inCart : boolean;
 }
 
-const productSchema = new Schema<ProdDocument>(
+const cartSchema = new Schema<CartDocument>(
   {
     name: {
       type: String,
@@ -114,9 +114,9 @@ const productSchema = new Schema<ProdDocument>(
   { timestamps: true }
 );
 
-const Product: Model<ProdDocument> = mongoose.model<ProdDocument>(
+const Product: Model<CartDocument> = mongoose.model<CartDocument>(
   "Product",
-  productSchema
+  cartSchema
 );
 
 export default Product;

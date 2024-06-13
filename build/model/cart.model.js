@@ -24,7 +24,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const productSchema = new mongoose_1.Schema({
+const cartSchema = new mongoose_1.Schema({
     name: {
         type: String,
         minlength: 2,
@@ -103,5 +103,5 @@ const productSchema = new mongoose_1.Schema({
         required: true,
     },
 }, { timestamps: true });
-const Product = mongoose_1.default.model("Product", productSchema);
+const Product = mongoose_1.default.model("Product", cartSchema);
 exports.default = Product;

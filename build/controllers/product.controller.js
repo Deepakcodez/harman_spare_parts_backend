@@ -34,7 +34,7 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 }));
 // Get all products
 exports.getAllProducts = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const resultPerPage = 20;
+    const resultPerPage = 9;
     const productCount = yield product_model_1.default.countDocuments();
     const apiFeature = new APIfeature_1.APIfeature(product_model_1.default.find(), req.query)
         .search()
