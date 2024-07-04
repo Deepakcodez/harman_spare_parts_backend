@@ -37,7 +37,7 @@ const productSchema = new Schema<ProdDocument>(
       type: String,
       minlength: 2,
       required: true,
-    },
+    },   
     description: {
       type: String,
       required: [true, "Description is required"],

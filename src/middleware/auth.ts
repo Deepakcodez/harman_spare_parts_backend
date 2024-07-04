@@ -20,9 +20,9 @@ declare global {
 
 export const isAuthenticatedUser = asyncHandler(
   async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const { token } = req.cookies;
+    const  token  = req.cookies.token || req.headers.authorization;
 
-    console.log(">>>>>>>>>>>", token);
+    console.log(">>>>>>>>>>>from server middleware", token,req.cookies.token, req.headers.authorization);
 
     if (!token) {
       return next(new ErrorHandler("Please login to access", 401));

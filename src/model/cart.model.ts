@@ -1,122 +1,64 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-interface Image {
-  public_id: string;
-  url: string;
-}
-
-export interface Review  {
-  // _id:   mongoose.Types.ObjectId | undefined; 
-  user: mongoose.Types.ObjectId;
-  name: string | undefined;
-  rating: number;
-  comment: string;
-}
-
-interface UserReference {
-  user: mongoose.Types.ObjectId;
-}
-
-export interface CartDocument extends Document, UserReference {
-  name: string;
-  description: string;
+interface CartProduct {
+  productId: mongoose.Types.ObjectId;
+  quantity: number;
   price: number;
-  ratings: number;
-  images: Image[];
-  category: string;
-  stock: number;
-  numberOfReviews: number;
-  reviews: Review[];
-  isFreeDelivery : boolean;
-  inCart : boolean;
+  name: string;
 }
 
-const cartSchema = new Schema<CartDocument>(
+export interface CartDocument extends Document {
+  userId: mongoose.Types.ObjectId;
+  products: CartProduct[];
+  totalPrice: number;
+  createdAt?: Date;
+  updatedAt?: Date;
+}
+
+const cartProductSchema = new Schema<CartProduct>(
   {
-    name: {
-      type: String,
-      minlength: 2,
-      required: true,
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+      required: true
     },
-    description: {
-      type: String,
-      required: [true, "Description is required"],
+    quantity: {
+      type: Number,
+      required: true,
+      default: 1
     },
     price: {
       type: Number,
-      required: [true, "please enter product price"],
+      required: true
     },
-    ratings: {
-      type: Number,
-      default: 0,
-    },
-    images: [
-      {
-        public_id: {
-          type: String,
-          required: true,
-        },
-        url: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
-    category: {
+    name: {
       type: String,
-      required: [true, "enter product category"],
-    },
-    stock: {
-      type: Number,
-      required: [true, "enter product stock"],
-      default: 1,
-    },
-    numberOfReviews: {
-      type: Number,
-      default: 0,
-    },
-    isFreeDelivery: {
-      type: Boolean,
-      required: true,
-      default: true,
-    },
-    inCart :{
-      type : Boolean,
-      default : false,
-    },
-    reviews: [
-      {
-        user: {
-          type: mongoose.Schema.ObjectId,
-          ref: "User",
-          required: true,
-        },
-        name: {
-          type: String,
-          required: true,
-        },
-        rating: {
-          type: Number,
-          required: true,
-        },
-        comment: {
-          type: String,
-          required: true,
-        },
-      },
-    ],
-    user: {
-      type: mongoose.Schema.ObjectId,
+      required: true
+    }
+  },
+  { _id: false } // Disable the generation of `_id` for subdocuments
+);
+
+const cartSchema = new Schema<CartDocument>(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      required: true
     },
+    products: [cartProductSchema],
+    totalPrice: {
+      type: Number,
+      required: true,
+      default: 0
+    }
   },
   { timestamps: true }
 );
 
-const Product: Model<CartDocument> = mongoose.model<CartDocument>(
-  "Product",
+const Cart: Model<CartDocument> = mongoose.model<CartDocument>(
+  "Cart",
   cartSchema
 );
 
-export default Product;
+export default Cart;

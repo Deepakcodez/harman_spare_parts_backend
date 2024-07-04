@@ -24,84 +24,39 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const cartSchema = new mongoose_1.Schema({
-    name: {
-        type: String,
-        minlength: 2,
-        required: true,
+const cartProductSchema = new mongoose_1.Schema({
+    productId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
+        ref: "Product",
+        required: true
     },
-    description: {
-        type: String,
-        required: [true, "Description is required"],
+    quantity: {
+        type: Number,
+        required: true,
+        default: 1
     },
     price: {
         type: Number,
-        required: [true, "please enter product price"],
+        required: true
     },
-    ratings: {
-        type: Number,
-        default: 0,
-    },
-    images: [
-        {
-            public_id: {
-                type: String,
-                required: true,
-            },
-            url: {
-                type: String,
-                required: true,
-            },
-        },
-    ],
-    category: {
+    name: {
         type: String,
-        required: [true, "enter product category"],
-    },
-    stock: {
-        type: Number,
-        required: [true, "enter product stock"],
-        default: 1,
-    },
-    numberOfReviews: {
-        type: Number,
-        default: 0,
-    },
-    isFreeDelivery: {
-        type: Boolean,
-        required: true,
-        default: true,
-    },
-    inCart: {
-        type: Boolean,
-        default: false,
-    },
-    reviews: [
-        {
-            user: {
-                type: mongoose_1.default.Schema.ObjectId,
-                ref: "User",
-                required: true,
-            },
-            name: {
-                type: String,
-                required: true,
-            },
-            rating: {
-                type: Number,
-                required: true,
-            },
-            comment: {
-                type: String,
-                required: true,
-            },
-        },
-    ],
-    user: {
-        type: mongoose_1.default.Schema.ObjectId,
+        required: true
+    }
+}, { _id: false } // Disable the generation of `_id` for subdocuments
+);
+const cartSchema = new mongoose_1.Schema({
+    userId: {
+        type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "User",
-        required: true,
+        required: true
     },
+    products: [cartProductSchema],
+    totalPrice: {
+        type: Number,
+        required: true,
+        default: 0
+    }
 }, { timestamps: true });
-const Product = mongoose_1.default.model("Product", cartSchema);
-exports.default = Product;
+const Cart = mongoose_1.default.model("Cart", cartSchema);
+exports.default = Cart;

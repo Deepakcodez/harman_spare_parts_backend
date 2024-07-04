@@ -112,7 +112,7 @@ export const getProduct = asyncHandler(
 export const createProductReview = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { rating, comment, productId } = req.body;
-
+    // console.log('>>>>>>>>>>>', req.body)
     const review: Review = {
       user: req.user?._id,
       name: req.user?.name,
@@ -151,7 +151,7 @@ export const createProductReview = asyncHandler(
 
     res.status(200).json({
       success: true,
-      product,
+      
     });
   }
 );

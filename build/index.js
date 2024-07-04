@@ -40,6 +40,7 @@ app.get('/', (req, res) => {
 app.use("/api/v1/user", user_route_1.default);
 app.use("/api/v1/product", product_router_1.default);
 app.use("/api/v1/order", order_route_1.default);
+app.use("/api/v1/cart", order_route_1.default);
 app.use(error_1.default);
 const server = app.listen(PORT, () => {
     console.log(`server is running at port ${PORT}`);

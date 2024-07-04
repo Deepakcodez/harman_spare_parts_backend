@@ -16,6 +16,14 @@ export const register = async (
   if (!name || !email || !password) {
     return next(new ErrorHandler("User credentials are not provided", 400));
   }
+
+  // Check if user already exists
+  const existingUser = await User.findOne({ email });
+  if (existingUser) {
+    return next(new ErrorHandler("Email is already registered", 400));
+  }
+
+  
   const user = await User.create({
     name,
     email,
