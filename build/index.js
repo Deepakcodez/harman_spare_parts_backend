@@ -13,16 +13,16 @@ const error_1 = __importDefault(require("./middleware/error"));
 const PORT = process.env.PORT || 8000;
 //handling uncaught error
 process.on("uncaughtException", (err) => {
-    console.log('>>>>>>>>>>>Error', err.message);
-    console.log('>>>>>>>>>>>shutting own server due to uncaughtException promise');
+    console.log(">>>>>>>>>>>Error", err.message);
+    console.log(">>>>>>>>>>>shutting own server due to uncaughtException promise");
     process.exit(1);
 });
 //connecting database
 (0, dbConnection_1.connectDB)();
 // Middlewares
 const corsOptions = {
-    origin: '*',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: "*",
+    methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
     credentials: true,
     optionsSuccessStatus: 204,
 };
@@ -34,21 +34,22 @@ app.use((0, cookie_parser_1.default)());
 const user_route_1 = __importDefault(require("./routers/user.route"));
 const product_router_1 = __importDefault(require("./routers/product.router"));
 const order_route_1 = __importDefault(require("./routers/order.route"));
-app.get('/', (req, res) => {
-    res.send('Hello World!');
+const cart_route_1 = __importDefault(require("./routers/cart.route"));
+app.get("/", (req, res) => {
+    res.send("Hello World!");
 });
 app.use("/api/v1/user", user_route_1.default);
 app.use("/api/v1/product", product_router_1.default);
 app.use("/api/v1/order", order_route_1.default);
-app.use("/api/v1/cart", order_route_1.default);
+app.use("/api/v1/cart", cart_route_1.default);
 app.use(error_1.default);
 const server = app.listen(PORT, () => {
     console.log(`server is running at port ${PORT}`);
 });
 //Handling unhandled promise
 process.on("unhandledRejection", (err) => {
-    console.log('>>>>>>>>>>>Error', err.message);
-    console.log('>>>>>>>>>>>shutting own server due to unhandle promise');
+    console.log(">>>>>>>>>>>Error", err.message);
+    console.log(">>>>>>>>>>>shutting own server due to unhandle promise");
     server.close(() => {
         process.exit(1);
     });

@@ -94,6 +94,7 @@ exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(v
 exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _b, _c;
     const { rating, comment, productId } = req.body;
+    // console.log('>>>>>>>>>>>', req.body)
     const review = {
         user: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id,
         name: (_c = req.user) === null || _c === void 0 ? void 0 : _c.name,
@@ -126,7 +127,6 @@ exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __
     yield product.save({ validateBeforeSave: false });
     res.status(200).json({
         success: true,
-        product,
     });
 }));
 //get all reviews

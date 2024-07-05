@@ -17,7 +17,9 @@ const product_model_1 = __importDefault(require("../model/product.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
 // Add product to cart
 const addProductToCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const { userId, productId, quantity } = req.body;
+    var _a;
+    const { productId, quantity } = req.body;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
     try {
         // Find the product
         const product = yield product_model_1.default.findById(productId);

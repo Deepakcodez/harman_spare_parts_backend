@@ -25,6 +25,11 @@ const register = (req, resp, next) => __awaiter(void 0, void 0, void 0, function
     if (!name || !email || !password) {
         return next(new errorHandler_1.ErrorHandler("User credentials are not provided", 400));
     }
+    // Check if user already exists
+    const existingUser = yield user_model_1.default.findOne({ email });
+    if (existingUser) {
+        return next(new errorHandler_1.ErrorHandler("Email is already registered", 400));
+    }
     const user = yield user_model_1.default.create({
         name,
         email,

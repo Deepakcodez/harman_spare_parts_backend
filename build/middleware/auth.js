@@ -18,8 +18,8 @@ const errorHandler_1 = require("../utils/errorHandler");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const user_model_1 = __importDefault(require("../model/user.model"));
 exports.isAuthenticatedUser = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { token } = req.cookies;
-    console.log(">>>>>>>>>>>", token);
+    const token = req.cookies.token || req.headers.authorization;
+    console.log(">>>>>>>>>>>from server middleware", token, req.cookies.token, req.headers.authorization);
     if (!token) {
         return next(new errorHandler_1.ErrorHandler("Please login to access", 401));
     }
