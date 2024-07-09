@@ -39,17 +39,12 @@ const cartProductSchema = new mongoose_1.Schema({
         type: Number,
         required: true
     },
-    name: {
-        type: String,
-        required: true
-    }
 }, { _id: false } // Disable the generation of `_id` for subdocuments
 );
 const cartSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "User",
-        required: true
     },
     products: [cartProductSchema],
     totalPrice: {

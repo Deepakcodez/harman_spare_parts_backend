@@ -5,7 +5,7 @@ import { addProductToCart } from '../controllers/cart.controller';
 
 const router = express.Router();
 
-router.post('/add', isAuthenticatedUser, addProductToCart);
+router.post('/add',    addProductToCart);
 
 
 export default router;

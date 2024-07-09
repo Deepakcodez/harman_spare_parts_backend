@@ -4,7 +4,7 @@ interface CartProduct {
   productId: mongoose.Types.ObjectId;
   quantity: number;
   price: number;
-  name: string;
+ 
 }
 
 export interface CartDocument extends Document {
@@ -31,10 +31,7 @@ const cartProductSchema = new Schema<CartProduct>(
       type: Number,
       required: true
     },
-    name: {
-      type: String,
-      required: true
-    }
+   
   },
   { _id: false } // Disable the generation of `_id` for subdocuments
 );
@@ -44,7 +41,7 @@ const cartSchema = new Schema<CartDocument>(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
+      
     },
     products: [cartProductSchema],
     totalPrice: {
