@@ -16,7 +16,7 @@ export const addProductToCart = asyncHandler(
       return next(new ErrorHandler("ProductId not provided", 404));
     }
 
-    let user = await User.findById(userId).populate('cart');
+    let user = await User.findById(userId).populate("cart");
 
     if (!user) {
       return next(new ErrorHandler("User not found", 404));
@@ -40,10 +40,13 @@ export const addProductToCart = asyncHandler(
     }
 
     // Check if the product already exists in the cart
-    const cartProduct = cart.products.find(p => p.productId.equals(productId));
+    const productIndex = cart.products.findIndex((p) =>
+      p.productId.equals(productId)
+    );
 
-    if (cartProduct) {
-      cartProduct.quantity += quantity;
+    if (productIndex > -1) {
+      // If the product exists, remove it from the cart
+      cart.products.splice(productIndex, 1);
     } else {
       cart.products.push({
         productId: productId,
@@ -53,16 +56,39 @@ export const addProductToCart = asyncHandler(
     }
 
     // Update the total price
-    cart.totalPrice = cart.products.reduce((total, item) => total + item.price * item.quantity, 0);
+    cart.totalPrice = cart.products.reduce(
+      (total, item) => total + item.price * item.quantity,
+      0
+    );
 
     // Save the cart
     await cart.save();
 
     // Populate the products in the cart
-    await cart.populate('products.productId');
+    await cart.populate("products.productId");
 
-   
+    res.status(200).json({ success: true, cart });
+  }
+);
 
-    res.status(200).json({ success: true });
+//get cart
+export const cart = asyncHandler(
+  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const userId = req.user?._id; 
+
+    let user = await User.findById(userId).populate("cart");
+
+    if (!user) {
+      return next(new ErrorHandler("User not found", 404));
+    }
+
+    // Check if the user already has a cart
+    let cart = await Cart.findById(user.cart).populate('products.productId');
+
+    if (!cart) {
+      return next(new ErrorHandler("Cart data not found", 404));
+    }
+
+    res.status(200).json({ success: true, cart });
   }
 );
