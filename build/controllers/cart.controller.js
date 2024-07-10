@@ -12,40 +12,43 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addProductToCart = void 0;
+exports.cart = exports.addProductToCart = void 0;
 const product_model_1 = __importDefault(require("../model/product.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const errorHandler_1 = require("../utils/errorHandler");
+const user_model_1 = __importDefault(require("../model/user.model"));
 // Add product to cart
 exports.addProductToCart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    const { productId, quantity, cartId } = req.body;
+    const { productId } = req.body;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
-    if (!quantity) {
-        let quantity = 1;
-    }
+    let quantity = 1;
     if (!productId) {
         return next(new errorHandler_1.ErrorHandler("ProductId not provided", 404));
     }
-    let cart = yield cart_model_1.default.findOne({ _id: cartId });
-    // If cart does not exist, create a new cart
-    if (!cart) {
-        cart = new cart_model_1.default({
-            userId,
-            products: [],
-            totalPrice: 0,
-        });
+    let user = yield user_model_1.default.findById(userId).populate("cart");
+    if (!user) {
+        return next(new errorHandler_1.ErrorHandler("User not found", 404));
     }
-    //find product by id
+    // Find product by id
     const product = yield product_model_1.default.findById(productId);
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
+    // Check if the user already has a cart
+    let cart = yield cart_model_1.default.findById(user.cart);
+    if (!cart) {
+        // If no cart exists, create a new one
+        cart = new cart_model_1.default({ user: userId, products: [], totalPrice: 0 });
+        user.cart = cart._id;
+        yield user.save();
+    }
     // Check if the product already exists in the cart
-    const cartProduct = cart.products.find(p => p.productId.equals(productId));
-    if (cartProduct) {
-        cartProduct.quantity += quantity;
+    const productIndex = cart.products.findIndex((p) => p.productId.equals(productId));
+    if (productIndex > -1) {
+        // If the product exists, remove it from the cart
+        cart.products.splice(productIndex, 1);
     }
     else {
         cart.products.push({
@@ -59,12 +62,21 @@ exports.addProductToCart = (0, asyncHandler_1.default)((req, res, next) => __awa
     // Save the cart
     yield cart.save();
     // Populate the products in the cart
-    yield cart.populate('products.productId');
-    // Save the cart ID in cookies
-    res.cookie('cart', cart._id.toString(), {
-        httpOnly: true,
-        sameSite: 'strict',
-        maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-    });
+    yield cart.populate("products.productId");
+    res.status(200).json({ success: true, cart });
+}));
+//get cart
+exports.cart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
+    let user = yield user_model_1.default.findById(userId).populate("cart");
+    if (!user) {
+        return next(new errorHandler_1.ErrorHandler("User not found", 404));
+    }
+    // Check if the user already has a cart
+    let cart = yield cart_model_1.default.findById(user.cart).populate('products.productId');
+    if (!cart) {
+        return next(new errorHandler_1.ErrorHandler("Cart data not found", 404));
+    }
     res.status(200).json({ success: true, cart });
 }));

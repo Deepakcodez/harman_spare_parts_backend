@@ -60,6 +60,12 @@ const userSchema = new mongoose_1.Schema({
         required: [true, "Please enter a password"],
         select: false,
     },
+    cart: [
+        {
+            type: mongoose_1.default.Schema.ObjectId,
+            ref: "Cart",
+        },
+    ],
     avatar: {
         public_id: {
             type: String,
