@@ -2,7 +2,7 @@ import mongoose, { Schema, Document, Model } from "mongoose";
 import validator from "validator";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import crypto from 'crypto'
+import crypto from "crypto";
 interface Avatar {
   public_id: string;
   url: string;
@@ -13,12 +13,13 @@ export interface UserDocument extends Document {
   email: string;
   password: string;
   avatar: Avatar;
+  cart: mongoose.Types.ObjectId[];
   role: string;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
   getJWTToken: () => string;
   comparePassword: (enteredPassword: string) => Promise<boolean>;
-  getResetPasswordToken:()=>string;
+  getResetPasswordToken: () => string;
 }
 
 const userSchema = new Schema<UserDocument>(
@@ -42,6 +43,12 @@ const userSchema = new Schema<UserDocument>(
       required: [true, "Please enter a password"],
       select: false,
     },
+    cart: [
+      {
+        type: mongoose.Schema.ObjectId,
+        ref: "Cart",
+      },
+    ],
     avatar: {
       public_id: {
         type: String,
@@ -76,29 +83,30 @@ userSchema.methods.getJWTToken = function (): string {
   });
 };
 
-userSchema.methods.comparePassword = async function (enteredPassword: string): Promise<boolean> {
+userSchema.methods.comparePassword = async function (
+  enteredPassword: string
+): Promise<boolean> {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
 //generating password reset token
-userSchema.methods.getResetPasswordToken = function(){
-
-
+userSchema.methods.getResetPasswordToken = function () {
   //generating token
   const resetToken = crypto.randomBytes(20).toString("hex");
-  
+
   //hashing token
   this.resetPasswordToken = crypto
-  .createHash("sha256")
-  .update(resetToken)
-  .digest("hex");
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
 
   this.resetPasswordExpire = Date.now() + 15 * 60 * 1000;
 
-  return resetToken
+  return resetToken;
+};
 
-}
-
-
-const User: Model<UserDocument> = mongoose.model<UserDocument>("User", userSchema);
+const User: Model<UserDocument> = mongoose.model<UserDocument>(
+  "User",
+  userSchema
+);
 export default User;
