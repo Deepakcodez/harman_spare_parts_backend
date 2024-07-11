@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cart = exports.addProductToCart = void 0;
+exports.removeProductToCart = exports.cart = exports.addProductToCart = void 0;
 const product_model_1 = __importDefault(require("../model/product.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
@@ -74,9 +74,40 @@ exports.cart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0,
         return next(new errorHandler_1.ErrorHandler("User not found", 404));
     }
     // Check if the user already has a cart
-    let cart = yield cart_model_1.default.findById(user.cart).populate('products.productId');
+    let cart = yield cart_model_1.default.findById(user.cart).populate("products.productId");
     if (!cart) {
         return next(new errorHandler_1.ErrorHandler("Cart data not found", 404));
     }
+    res.status(200).json({ success: true, cart });
+}));
+//remove prod from cart
+exports.removeProductToCart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
+    const { productId } = req.body;
+    const userId = (_c = req.user) === null || _c === void 0 ? void 0 : _c._id;
+    let quantity = 1;
+    if (!productId) {
+        return next(new errorHandler_1.ErrorHandler("ProductId not provided", 404));
+    }
+    let user = yield user_model_1.default.findById(userId).populate("cart");
+    if (!user) {
+        return next(new errorHandler_1.ErrorHandler("User not found", 404));
+    }
+    // Find product by id
+    const product = yield product_model_1.default.findById(productId);
+    if (!product) {
+        return next(new errorHandler_1.ErrorHandler("Product not found", 404));
+    }
+    // Check if the user already has a cart
+    let cart = yield cart_model_1.default.findById(user.cart);
+    if (!cart) {
+        return next(new errorHandler_1.ErrorHandler("cart not found", 404));
+    }
+    // Remove the product from the cart
+    cart.products = cart.products.filter((p) => p.productId.toString() !== productId.toString());
+    // Save the updated cart
+    yield cart.save();
+    // Populate the products in the cart
+    yield cart.populate("products.productId");
     res.status(200).json({ success: true, cart });
 }));

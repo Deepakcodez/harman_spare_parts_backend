@@ -1,11 +1,15 @@
 import express from "express";
-import asyncHandler from "../middleware/asyncHandler";
 import { authorizedRole, isAuthenticatedUser } from "../middleware/auth";
-import { addProductToCart, cart } from "../controllers/cart.controller";
+import {
+  addProductToCart,
+  cart,
+  removeProductToCart,
+} from "../controllers/cart.controller";
 
 const router = express.Router();
 
 router.post("/add", isAuthenticatedUser, addProductToCart);
+router.post("/remove", isAuthenticatedUser, removeProductToCart);
 router.get("/details", isAuthenticatedUser, cart);
 
 export default router;
