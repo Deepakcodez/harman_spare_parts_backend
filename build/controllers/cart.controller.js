@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getCart = exports.addProductToCart = void 0;
+exports.removeProductFromCart = exports.getCart = exports.addProductToCart = void 0;
 const product_model_1 = __importDefault(require("../model/product.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
@@ -85,37 +85,37 @@ exports.getCart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void
     }
     res.status(200).json({ success: true, cart });
 }));
-// //remove prod from cart
-// export const removeProductToCart = asyncHandler(
-//   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-//     const { productId } = req.body;
-//     const userId = req.user?._id;
-//     let quantity = 1;
-//     if (!productId) {
-//       return next(new ErrorHandler("ProductId not provided", 404));
-//     }
-//     let user = await User.findById(userId).populate("cart");
-//     if (!user) {
-//       return next(new ErrorHandler("User not found", 404));
-//     }
-//     // Find product by id
-//     const product = await Product.findById(productId);
-//     if (!product) {
-//       return next(new ErrorHandler("Product not found", 404));
-//     }
-//     // Check if the user already has a cart
-//     let cart = await Cart.findById(user.cart);
-//     if (!cart) {
-//       return next(new ErrorHandler("cart not found", 404));
-//     }
-//     // Remove the product from the cart
-//     cart.products = cart.products.filter(
-//       (p) => p.productId.toString() !== productId.toString()
-//     );
-//     // Save the updated cart
-//     await cart.save();
-//     // Populate the products in the cart
-//     await cart.populate("products.productId");
-//     res.status(200).json({ success: true, cart });
-//   }
-// );
+exports.removeProductFromCart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
+    const { productId } = req.body;
+    const userId = (_c = req.user) === null || _c === void 0 ? void 0 : _c._id;
+    if (!productId) {
+        return next(new errorHandler_1.ErrorHandler("ProductId not provided", 400));
+    }
+    if (!userId) {
+        return next(new errorHandler_1.ErrorHandler("User not authenticated", 401));
+    }
+    const user = yield user_model_1.default.findById(userId);
+    if (!user) {
+        return next(new errorHandler_1.ErrorHandler("User not found", 404));
+    }
+    // Check if the user already has a cart
+    let cart = yield cart_model_1.default.findOne({ userId });
+    if (!cart) {
+        return next(new errorHandler_1.ErrorHandler("Cart not found", 404));
+    }
+    // Check if the product exists in the cart
+    const productIndex = cart.products.findIndex((p) => p.product.productId.toString() === productId.toString());
+    if (productIndex === -1) {
+        return next(new errorHandler_1.ErrorHandler("Product not found in cart", 404));
+    }
+    // Remove the product from the cart
+    cart.products.splice(productIndex, 1);
+    // Update the total price
+    cart.totalPrice = cart.products.reduce((total, item) => total + item.price * item.quantity, 0);
+    // Save the updated cart
+    yield cart.save();
+    // Populate the products in the cart
+    yield cart.populate("products.product.productId");
+    res.status(200).json({ success: true, cart });
+}));
