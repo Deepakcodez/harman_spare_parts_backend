@@ -49,6 +49,7 @@ exports.addProductToCart = (0, asyncHandler_1.default)((req, res, next) => __awa
     if (productIndex > -1) {
         // If the product exists, update the quantity
         cart.products[productIndex].product.prodQuantity += quantity;
+        cart.products[productIndex].quantity += quantity;
     }
     else {
         cart.products.push({
@@ -71,6 +72,7 @@ exports.addProductToCart = (0, asyncHandler_1.default)((req, res, next) => __awa
 exports.getCart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _b;
     const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
+    console.log('>>>>>>>>>>>inside cart detail controller');
     if (!userId) {
         return next(new errorHandler_1.ErrorHandler("User not authenticated", 401));
     }

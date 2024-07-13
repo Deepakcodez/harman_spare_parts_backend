@@ -48,6 +48,7 @@ export const addProductToCart = asyncHandler(
       if (productIndex > -1) {
         // If the product exists, update the quantity
         cart.products[productIndex].product.prodQuantity += quantity;
+        cart.products[productIndex].quantity += quantity;
       } else {
         cart.products.push({
           product: {
@@ -78,7 +79,7 @@ export const addProductToCart = asyncHandler(
   export const getCart = asyncHandler(
     async (req: Request, res: Response, next: NextFunction): Promise<void> => {
       const userId = req.user?._id;
-  
+     console.log('>>>>>>>>>>>inside cart detail controller')
       if (!userId) {
         return next(new ErrorHandler("User not authenticated", 401));
       }
