@@ -75,27 +75,30 @@ export const addProductToCart = asyncHandler(
     }
   );
 
-// //get cart
-// export const cart = asyncHandler(
-//   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-//     const userId = req.user?._id;
-
-//     let user = await User.findById(userId).populate("cart");
-
-//     if (!user) {
-//       return next(new ErrorHandler("User not found", 404));
-//     }
-
-//     // Check if the user already has a cart
-//     let cart = await Cart.findById(user.cart).populate("products.productId");
-
-//     if (!cart) {
-//       return next(new ErrorHandler("Cart data not found", 404));
-//     }
-
-//     res.status(200).json({ success: true, cart });
-//   }
-// );
+  export const getCart = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const userId = req.user?._id;
+  
+      if (!userId) {
+        return next(new ErrorHandler("User not authenticated", 401));
+      }
+  
+      const user = await User.findById(userId);
+  
+      if (!user) {
+        return next(new ErrorHandler("User not found", 404));
+      }
+  
+      // Check if the user already has a cart
+      let cart = await Cart.findOne({ userId }).populate("products.product.productId");
+  
+      if (!cart) {
+        return next(new ErrorHandler("Cart not found", 404));
+      }
+  
+      res.status(200).json({ success: true, cart });
+    }
+  );
 
 // //remove prod from cart
 // export const removeProductToCart = asyncHandler(

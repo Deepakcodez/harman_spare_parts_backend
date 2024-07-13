@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.addProductToCart = void 0;
+exports.getCart = exports.addProductToCart = void 0;
 const product_model_1 = __importDefault(require("../model/product.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
@@ -68,22 +68,23 @@ exports.addProductToCart = (0, asyncHandler_1.default)((req, res, next) => __awa
     yield cart.populate("products.product.productId");
     res.status(200).json({ success: true, cart });
 }));
-// //get cart
-// export const cart = asyncHandler(
-//   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-//     const userId = req.user?._id;
-//     let user = await User.findById(userId).populate("cart");
-//     if (!user) {
-//       return next(new ErrorHandler("User not found", 404));
-//     }
-//     // Check if the user already has a cart
-//     let cart = await Cart.findById(user.cart).populate("products.productId");
-//     if (!cart) {
-//       return next(new ErrorHandler("Cart data not found", 404));
-//     }
-//     res.status(200).json({ success: true, cart });
-//   }
-// );
+exports.getCart = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
+    const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id;
+    if (!userId) {
+        return next(new errorHandler_1.ErrorHandler("User not authenticated", 401));
+    }
+    const user = yield user_model_1.default.findById(userId);
+    if (!user) {
+        return next(new errorHandler_1.ErrorHandler("User not found", 404));
+    }
+    // Check if the user already has a cart
+    let cart = yield cart_model_1.default.findOne({ userId }).populate("products.product.productId");
+    if (!cart) {
+        return next(new errorHandler_1.ErrorHandler("Cart not found", 404));
+    }
+    res.status(200).json({ success: true, cart });
+}));
 // //remove prod from cart
 // export const removeProductToCart = asyncHandler(
 //   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
