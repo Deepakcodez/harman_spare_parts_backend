@@ -24,20 +24,32 @@ var __importStar = (this && this.__importStar) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importStar(require("mongoose"));
-const cartProductSchema = new mongoose_1.Schema({
+const productSchema = new mongoose_1.Schema({
     productId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "Product",
-        required: true
+        required: true,
+    },
+    prodQuantity: {
+        type: Number,
+        required: true,
+        default: 1,
+    },
+}, { _id: false } // Disable the generation of `_id` for subdocuments
+);
+const cartProductSchema = new mongoose_1.Schema({
+    product: {
+        type: productSchema,
+        required: true,
     },
     quantity: {
         type: Number,
         required: true,
-        default: 1
+        default: 1,
     },
     price: {
         type: Number,
-        required: true
+        required: true,
     },
 }, { _id: false } // Disable the generation of `_id` for subdocuments
 );
@@ -45,13 +57,14 @@ const cartSchema = new mongoose_1.Schema({
     userId: {
         type: mongoose_1.default.Schema.Types.ObjectId,
         ref: "User",
+        required: true,
     },
     products: [cartProductSchema],
     totalPrice: {
         type: Number,
         required: true,
-        default: 0
-    }
+        default: 0,
+    },
 }, { timestamps: true });
 const Cart = mongoose_1.default.model("Cart", cartSchema);
 exports.default = Cart;

@@ -8,6 +8,6 @@ const auth_1 = require("../middleware/auth");
 const cart_controller_1 = require("../controllers/cart.controller");
 const router = express_1.default.Router();
 router.post("/add", auth_1.isAuthenticatedUser, cart_controller_1.addProductToCart);
-router.post("/remove", auth_1.isAuthenticatedUser, cart_controller_1.removeProductToCart);
-router.get("/details", auth_1.isAuthenticatedUser, cart_controller_1.cart);
+// router.post("/remove", isAuthenticatedUser, removeProductToCart);
+// router.get("/details", isAuthenticatedUser, cart);
 exports.default = router;

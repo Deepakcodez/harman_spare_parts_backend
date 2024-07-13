@@ -1,10 +1,14 @@
 import mongoose, { Schema, Document, Model } from "mongoose";
 
-interface CartProduct {
+interface Product {
   productId: mongoose.Types.ObjectId;
+  prodQuantity: number;
+}
+
+interface CartProduct {
+  product: Product;
   quantity: number;
   price: number;
- 
 }
 
 export interface CartDocument extends Document {
@@ -15,23 +19,37 @@ export interface CartDocument extends Document {
   updatedAt?: Date;
 }
 
-const cartProductSchema = new Schema<CartProduct>(
+const productSchema = new Schema<Product>(
   {
     productId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Product",
-      required: true
+      required: true,
+    },
+    prodQuantity: {
+      type: Number,
+      required: true,
+      default: 1,
+    },
+  },
+  { _id: false } // Disable the generation of `_id` for subdocuments
+);
+
+const cartProductSchema = new Schema<CartProduct>(
+  {
+    product: {
+      type: productSchema,
+      required: true,
     },
     quantity: {
       type: Number,
       required: true,
-      default: 1
+      default: 1,
     },
     price: {
       type: Number,
-      required: true
+      required: true,
     },
-   
   },
   { _id: false } // Disable the generation of `_id` for subdocuments
 );
@@ -41,21 +59,18 @@ const cartSchema = new Schema<CartDocument>(
     userId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      
+      required: true,
     },
     products: [cartProductSchema],
     totalPrice: {
       type: Number,
       required: true,
-      default: 0
-    }
+      default: 0,
+    },
   },
   { timestamps: true }
 );
 
-const Cart: Model<CartDocument> = mongoose.model<CartDocument>(
-  "Cart",
-  cartSchema
-);
+const Cart: Model<CartDocument> = mongoose.model<CartDocument>("Cart", cartSchema);
 
 export default Cart;

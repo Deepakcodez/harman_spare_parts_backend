@@ -112,7 +112,7 @@ export const getProduct = asyncHandler(
 export const createProductReview = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { rating, comment, productId } = req.body;
-    // console.log('>>>>>>>>>>>', req.body)
+
     const review: Review = {
       user: req.user?._id,
       name: req.user?.name,
@@ -145,9 +145,9 @@ export const createProductReview = asyncHandler(
     product.reviews.forEach((rev) => {
       avg += rev.rating;
     });
-    product.ratings = avg / product.reviews.length;
+    parseFloat((avg / product.reviews.length).toFixed(1));
 
-    await product.save({ validateBeforeSave: false });
+    await product.save({ validateBeforeSave: false });  
 
     res.status(200).json({
       success: true,
