@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.removeProductFromCart = exports.getCart = exports.addProductToCart = void 0;
+exports.removeProductQuantity = exports.removeProductFromCart = exports.getCart = exports.addProductToCart = void 0;
 const product_model_1 = __importDefault(require("../model/product.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
@@ -120,4 +120,44 @@ exports.removeProductFromCart = (0, asyncHandler_1.default)((req, res, next) => 
     // Populate the products in the cart
     yield cart.populate("products.product.productId");
     res.status(200).json({ success: true, cart });
+}));
+exports.removeProductQuantity = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d;
+    const { productId } = req.body;
+    const userId = (_d = req.user) === null || _d === void 0 ? void 0 : _d._id;
+    if (!productId) {
+        return next(new errorHandler_1.ErrorHandler("ProductId not provided", 400));
+    }
+    if (!userId) {
+        return next(new errorHandler_1.ErrorHandler("User not authenticated", 401));
+    }
+    const user = yield user_model_1.default.findById(userId);
+    if (!user) {
+        return next(new errorHandler_1.ErrorHandler("User not found", 404));
+    }
+    // Check if the user already has a cart
+    let cart = yield cart_model_1.default.findOne({ userId });
+    if (!cart) {
+        return next(new errorHandler_1.ErrorHandler("Cart not found", 404));
+    }
+    // Check if the product exists in the cart
+    const productIndex = cart.products.findIndex((p) => p.product.productId.toString() === productId.toString());
+    if (productIndex === -1) {
+        return next(new errorHandler_1.ErrorHandler("Product not found in cart", 404));
+    }
+    // Decrease the product quantity
+    if (cart.products[productIndex].product.prodQuantity > 1) {
+        cart.products[productIndex].product.prodQuantity -= 1;
+        cart.products[productIndex].quantity -= 1;
+        // Update the total price
+        cart.totalPrice = cart.products.reduce((total, item) => total + item.price * item.quantity, 0);
+        // Save the updated cart
+        yield cart.save();
+        // Populate the products in the cart
+        yield cart.populate("products.product.productId");
+        res.status(200).json({ success: true, cart });
+    }
+    else {
+        return next(new errorHandler_1.ErrorHandler("Product quantity cannot be less than 1", 400));
+    }
 }));

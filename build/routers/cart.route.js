@@ -9,5 +9,6 @@ const cart_controller_1 = require("../controllers/cart.controller");
 const router = express_1.default.Router();
 router.post("/add", auth_1.isAuthenticatedUser, cart_controller_1.addProductToCart);
 router.post("/remove", auth_1.isAuthenticatedUser, cart_controller_1.removeProductFromCart);
+router.post("/decrease", auth_1.isAuthenticatedUser, cart_controller_1.removeProductQuantity);
 router.get("/details", auth_1.isAuthenticatedUser, cart_controller_1.getCart);
 exports.default = router;
