@@ -4,6 +4,7 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
 import mongoose from "mongoose";
+import { redis } from "..";
 
 // Create a new product
 export const createProduct = asyncHandler(
@@ -92,14 +93,33 @@ export const deleteProduct = asyncHandler(
 
 // Get a single product
 export const getProduct = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
+    
 
+    const productExists = await redis.exists(`product:${id}`);
+
+    if (productExists) {
+      console.log('>>>>>>>>>>>redis cached')
+      const product = await redis.get(`product:${id}`);
+
+      if (product) {
+        return res.status(200).json({
+          success: true,
+         
+          product: JSON.parse(product),
+        });
+      }
+    }
+   
     const product = await Product.findById(id);
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
     }
+
+
+    await redis.set(`product:${id}`, JSON.stringify(product));
 
     res.status(200).json({
       success: true,

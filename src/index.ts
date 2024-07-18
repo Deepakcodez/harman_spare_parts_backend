@@ -5,6 +5,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./utils/dbConnection";
 import errorMiddleware from "./middleware/error";
+import  Redis  from "ioredis";
 const PORT = process.env.PORT || 8000;
 //handling uncaught error
 process.on("uncaughtException", (err) => {
@@ -29,6 +30,21 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+
+export const redis = new Redis({
+  host : process.env.REDIS_HOST,
+  port : Number(process.env.REDIS_PORT),
+  password : process.env.REDIS_PASSWORD
+})
+
+ redis.on("connect", ()=>{
+  console.log("redis connected")
+ })
+
+
+
+
 //routers
 import userRouter from "./routers/user.route";
 import productRouter from "./routers/product.router";
