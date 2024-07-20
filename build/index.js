@@ -3,7 +3,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.redis = void 0;
 require("dotenv/config");
 const express_1 = __importDefault(require("express"));
 const app = (0, express_1.default)();
@@ -11,7 +10,7 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const cors_1 = __importDefault(require("cors"));
 const dbConnection_1 = require("./utils/dbConnection");
 const error_1 = __importDefault(require("./middleware/error"));
-const ioredis_1 = __importDefault(require("ioredis"));
+// import  Redis  from "ioredis";
 const PORT = process.env.PORT || 8000;
 //handling uncaught error
 process.on("uncaughtException", (err) => {
@@ -32,17 +31,17 @@ app.use((0, cors_1.default)(corsOptions));
 app.use(express_1.default.json());
 app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
-exports.redis = new ioredis_1.default({
-    host: process.env.REDIS_HOST,
-    port: Number(process.env.REDIS_PORT),
-    password: process.env.REDIS_PASSWORD
-});
-exports.redis.on("connect", () => {
-    console.log("redis connected");
-});
-exports.redis.on("error", (err) => {
-    console.error("Redis connection error:", err);
-});
+// export const redis = new Redis({
+//   host : process.env.REDIS_HOST,
+//   port : Number(process.env.REDIS_PORT),
+//   password : process.env.REDIS_PASSWORD
+// })
+//  redis.on("connect", ()=>{
+//   console.log("redis connected")
+//  })
+//  redis.on("error", (err) => {
+//   console.error("Redis connection error:", err);
+// });
 //routers
 const user_route_1 = __importDefault(require("./routers/user.route"));
 const product_router_1 = __importDefault(require("./routers/product.router"));

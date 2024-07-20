@@ -17,7 +17,7 @@ const product_model_1 = __importDefault(require("../model/product.model"));
 const errorHandler_1 = require("../utils/errorHandler");
 const APIfeature_1 = require("../utils/APIfeature");
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
-const __1 = require("..");
+// import { redis } from "..";
 // Create a new product
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -82,22 +82,22 @@ exports.deleteProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 // Get a single product
 exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const productExists = yield __1.redis.exists(`product:${id}`);
-    if (productExists) {
-        console.log('>>>>>>>>>>>redis cached');
-        const product = yield __1.redis.get(`product:${id}`);
-        if (product) {
-            return res.status(200).json({
-                success: true,
-                product: JSON.parse(product),
-            });
-        }
-    }
+    // const productExists = await redis.exists(`product:${id}`);
+    // if (productExists) {
+    //   console.log('>>>>>>>>>>>redis cached')
+    //   const product = await redis.get(`product:${id}`);
+    //   if (product) {
+    //     return res.status(200).json({
+    //       success: true,
+    //       product: JSON.parse(product),
+    //     });
+    //   }
+    // }
     const product = yield product_model_1.default.findById(id);
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
-    yield __1.redis.set(`product:${id}`, JSON.stringify(product));
+    // await redis.set(`product:${id}`, JSON.stringify(product));
     res.status(200).json({
         success: true,
         product,
