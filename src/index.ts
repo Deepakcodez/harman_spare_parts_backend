@@ -41,7 +41,9 @@ export const redis = new Redis({
  redis.on("connect", ()=>{
   console.log("redis connected")
  })
-
+ redis.on("error", (err) => {
+  console.error("Redis connection error:", err);
+});
 
 
 
@@ -69,7 +71,7 @@ const server = app.listen(PORT, () => {
 //Handling unhandled promise
 process.on("unhandledRejection", (err: any) => {
   console.log(">>>>>>>>>>>Error", err.message);
-  console.log(">>>>>>>>>>>shutting own server due to unhandle promise");
+  console.log(">>>>>>>>>>>shutting own server due to unhandled promise");
   server.close(() => {
     process.exit(1);
   });

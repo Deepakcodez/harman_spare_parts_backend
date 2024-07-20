@@ -40,6 +40,9 @@ exports.redis = new ioredis_1.default({
 exports.redis.on("connect", () => {
     console.log("redis connected");
 });
+exports.redis.on("error", (err) => {
+    console.error("Redis connection error:", err);
+});
 //routers
 const user_route_1 = __importDefault(require("./routers/user.route"));
 const product_router_1 = __importDefault(require("./routers/product.router"));
@@ -59,7 +62,7 @@ const server = app.listen(PORT, () => {
 //Handling unhandled promise
 process.on("unhandledRejection", (err) => {
     console.log(">>>>>>>>>>>Error", err.message);
-    console.log(">>>>>>>>>>>shutting own server due to unhandle promise");
+    console.log(">>>>>>>>>>>shutting own server due to unhandled promise");
     server.close(() => {
         process.exit(1);
     });
