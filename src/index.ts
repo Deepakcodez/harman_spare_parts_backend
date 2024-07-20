@@ -21,7 +21,7 @@ connectDB();
 
 // Middlewares
 const corsOptions = {
-  origin: ["https://harman-spare-parts.vercel.app/","*"],
+  origin: "*",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   optionsSuccessStatus: 204,
