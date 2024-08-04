@@ -47,6 +47,7 @@ const user_route_1 = __importDefault(require("./routers/user.route"));
 const product_router_1 = __importDefault(require("./routers/product.router"));
 const order_route_1 = __importDefault(require("./routers/order.route"));
 const cart_route_1 = __importDefault(require("./routers/cart.route"));
+const shipping_route_1 = __importDefault(require("./routers/shipping.route"));
 app.get("/", (req, res) => {
     res.send("Hello World!");
 });
@@ -54,6 +55,7 @@ app.use("/api/v1/user", user_route_1.default);
 app.use("/api/v1/product", product_router_1.default);
 app.use("/api/v1/order", order_route_1.default);
 app.use("/api/v1/cart", cart_route_1.default);
+app.use("/api/v1/shipping", shipping_route_1.default);
 app.use(error_1.default);
 const server = app.listen(PORT, () => {
     console.log(`server is running at port ${PORT}`);

@@ -5,14 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const mongoose_1 = __importDefault(require("mongoose"));
 const orderSchema = new mongoose_1.default.Schema({
-    shippingInfo: {
-        address: { type: String, required: true },
-        city: { type: String, required: true },
-        state: { type: String, required: true },
-        country: { type: String, required: true, default: "India" },
-        pinCode: { type: Number, required: true },
-        phoneNo: { type: Number, required: true }
-    },
+    shippingInfo: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'ShippingInfo', required: true },
     orderItems: [{
             name: { type: String, required: true },
             price: { type: Number, required: true },
@@ -21,13 +14,10 @@ const orderSchema = new mongoose_1.default.Schema({
             product: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Product', required: true }
         }],
     user: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
-    // paymentInfo: {
-    //   id: { type: String, required: true },
-    //   status: { type: String, required: true },
-    //   razorpay_order_id: { type: String } ,
-    //   razorpay_payment_id: {type: String,},
-    //   razorpay_signature: {type: String,},
-    // },
+    paymentInfo: {
+        status: { type: String, required: true, default: "Pending" },
+        razorpay_order_id: { type: String, required: true, }
+    },
     paidAt: { type: Date, required: true },
     itemsPrice: { type: Number, required: true, default: 0 },
     taxPrice: { type: Number, required: true, default: 0 },

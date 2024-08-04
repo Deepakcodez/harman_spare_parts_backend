@@ -1,14 +1,6 @@
 import mongoose, { Document, Model } from 'mongoose';
 
-// Interface for shipping information
-interface ShippingInfo {
-  address: string;
-  city: string;
-  state: string;
-  country: string;
-  pinCode: number;
-  phoneNo: number;
-}
+
 
 // Interface for order items
 interface OrderItem {
@@ -20,20 +12,17 @@ interface OrderItem {
 }
 
 // Interface for payment information
-// interface PaymentInfo {
-//   id: string; 
-//   status: string;
-//   razorpay_order_id?: string; 
-//   razorpay_payment_id? : string;
-//   razorpay_signature? : string
-// }
+interface PaymentInfo {
+  status: "Pending" | "Success";
+  razorpay_order_id?: string; 
+}
 
 // Interface for the order document
 export interface OrderDocument extends Document {
-  shippingInfo: ShippingInfo;
+  shippingInfo:  mongoose.Types.ObjectId;
   orderItems: OrderItem[];
   user: mongoose.Types.ObjectId;
-  // paymentInfo: PaymentInfo;
+  paymentInfo: PaymentInfo;
   paidAt: Date;
   itemsPrice: number;
   taxPrice: number;
@@ -45,14 +34,7 @@ export interface OrderDocument extends Document {
 }
 
 const orderSchema = new mongoose.Schema<OrderDocument>({
-  shippingInfo: {
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    country: { type: String, required: true, default: "India" },
-    pinCode: { type: Number, required: true },
-    phoneNo: { type: Number, required: true }
-  },
+  shippingInfo: { type: mongoose.Schema.Types.ObjectId, ref: 'ShippingInfo', required: true },
   orderItems: [{
     name: { type: String, required: true },
     price: { type: Number, required: true },
@@ -61,13 +43,10 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true }
   }],
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  // paymentInfo: {
-  //   id: { type: String, required: true },
-  //   status: { type: String, required: true },
-  //   razorpay_order_id: { type: String } ,
-  //   razorpay_payment_id: {type: String,},
-  //   razorpay_signature: {type: String,},
-  // },
+  paymentInfo:{
+    status : {type : String, required : true, default : "Pending"},
+    razorpay_order_id :  {type : String, required : true, }
+  },
   paidAt: { type: Date, required: true },
   itemsPrice: { type: Number, required: true, default: 0 },
   taxPrice: { type: Number, required: true, default: 0 },

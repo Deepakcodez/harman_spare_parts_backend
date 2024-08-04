@@ -20,10 +20,10 @@ function connectDB() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield mongoose_1.default.connect(uri);
-            console.log('>>>>>>>>>>> db connected');
+            console.log(">>>>>>>>>>> db connected");
         }
         catch (error) {
-            console.error('Error connecting to the database:', error.message);
+            console.error("Error connecting to the database:", error.message);
         }
     });
 }

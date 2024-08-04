@@ -7,6 +7,7 @@ import Razorpay from "razorpay";
 import crypto from "crypto";
 import { IRazorpayOrderOptions } from "../types/type";
 import ShippingInfo, { ShippingInfoDocument } from '../model/shippingInfo.model';
+import Payment from "../model/payment.model";
 const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
 const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
 
@@ -16,61 +17,6 @@ const generateReceiptId = (): string => {
 };
 
 
-
-
-// //shipping address
-export const shippingAddress = asyncHandler(
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { address, city, state, country, pinCode, phoneNo} = req.body;
-    const userId = req.user?.id;
-
-    const shippingDetail: ShippingInfoDocument ={
-        address,
-        city,
-        state,
-        country,
-        pinCode,
-        phoneNo,
-        user : userId
-    }
-    try {
-      
-       if(! address || !city || !state || !country || !pinCode || !phoneNo){
-          return next(new ErrorHandler("Provide all details", 404));
-       }
-
-       const shipping = await  ShippingInfo.findOne({user : userId} )
-
-       if (shipping) {
-        // Update existing shipping address
-        shipping.address = address;
-        shipping.city = city;
-        shipping.state = state;
-        shipping.country = country;
-        shipping.pinCode = pinCode;
-        shipping.phoneNo = phoneNo;
-        await shipping.save();
-      } else {
-        // Create new shipping address
-        await ShippingInfo.create(shippingDetail);
-      }
-
-      res.status(200).json({
-        success: true,
-        message: shipping ? "Shipping address updated successfully" : "Shipping address created successfully",
-      });
-
-    } catch (error) {
-      console.error("Error in saving shipping info:", error);
-      res.status(500).json({
-        success: false,
-        message: "Unable to save shipping info. Please try again.",
-      });
-    }
-
-     
-  }
-);
 
 
 
@@ -113,7 +59,6 @@ export const newOrder = asyncHandler(
         shippingInfo,
         orderItems,
         paymentInfo: {
-          ...paymentInfo,
           razorpay_order_id: razorpayOrder.id,
         },
         itemsPrice,
@@ -160,14 +105,23 @@ export const paymentVerify = asyncHandler(
   if (isAuthentic) {
     // Database comes here
 
-    // await Payment.create({
-    //   razorpay_order_id,
-    //   razorpay_payment_id,
-    //   razorpay_signature,
-    // });
+    await Payment.create({
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+    });
+
+    const updatedOrder = await Order.findOneAndUpdate(
+      { "paymentInfo.razorpay_order_id": razorpay_order_id },
+      { $set: { "paymentInfo.status": "Success" } },
+      { new: true }
+    );
+
+    if (!updatedOrder) return next(new ErrorHandler("No details provided", 400));
+    
 
     res.redirect(
-      `http://localhost:3000/paymentsuccess?reference=${razorpay_payment_id}`
+      `http://localhost:3000/products?reference=${razorpay_payment_id}`
     );
   } else {
     res.status(400).json({

@@ -1,11 +1,10 @@
 import express from 'express';
 import asyncHandler from '../middleware/asyncHandler';
 import { authorizedRole, isAuthenticatedUser } from '../middleware/auth';
-import { newOrder,getSingleOrder, myOrders, getAllOrders,deleteOrder, updateOrder, paymentVerify, shippingAddress } from '../controllers/order.controller';
+import { newOrder,getSingleOrder, myOrders, getAllOrders,deleteOrder, updateOrder, paymentVerify, } from '../controllers/order.controller';
 
 const router = express.Router();
 
-router.put('/shippingInfo', isAuthenticatedUser, shippingAddress); 
 router.post('/create', isAuthenticatedUser, newOrder); 
 router.post('/paymentVerify',  paymentVerify); 
 router.get('/singleOrder/:id', isAuthenticatedUser, getSingleOrder);
