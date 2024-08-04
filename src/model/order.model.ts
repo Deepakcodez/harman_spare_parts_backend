@@ -20,17 +20,20 @@ interface OrderItem {
 }
 
 // Interface for payment information
-interface PaymentInfo {
-  id: string;
-  status: string;
-}
+// interface PaymentInfo {
+//   id: string; 
+//   status: string;
+//   razorpay_order_id?: string; 
+//   razorpay_payment_id? : string;
+//   razorpay_signature? : string
+// }
 
 // Interface for the order document
 export interface OrderDocument extends Document {
   shippingInfo: ShippingInfo;
   orderItems: OrderItem[];
   user: mongoose.Types.ObjectId;
-  paymentInfo: PaymentInfo;
+  // paymentInfo: PaymentInfo;
   paidAt: Date;
   itemsPrice: number;
   taxPrice: number;
@@ -46,7 +49,7 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
     address: { type: String, required: true },
     city: { type: String, required: true },
     state: { type: String, required: true },
-    country: { type: String, required: true, default:"INDIA" },
+    country: { type: String, required: true, default: "India" },
     pinCode: { type: Number, required: true },
     phoneNo: { type: Number, required: true }
   },
@@ -58,10 +61,13 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true }
   }],
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  paymentInfo: {
-    id: { type: String, required: true },
-    status: { type: String, required: true }
-  },
+  // paymentInfo: {
+  //   id: { type: String, required: true },
+  //   status: { type: String, required: true },
+  //   razorpay_order_id: { type: String } ,
+  //   razorpay_payment_id: {type: String,},
+  //   razorpay_signature: {type: String,},
+  // },
   paidAt: { type: Date, required: true },
   itemsPrice: { type: Number, required: true, default: 0 },
   taxPrice: { type: Number, required: true, default: 0 },
@@ -72,10 +78,6 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
   createdAt: { type: Date, default: Date.now }
 });
 
-const Order: Model<OrderDocument> = mongoose.model<OrderDocument>(
-    "Order",
-    orderSchema
-  );
-  
-  export default Order;
-  
+const Order: Model<OrderDocument> = mongoose.model<OrderDocument>("Order", orderSchema);
+
+export default Order;

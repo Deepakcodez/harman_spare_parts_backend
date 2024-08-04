@@ -9,7 +9,7 @@ const orderSchema = new mongoose_1.default.Schema({
         address: { type: String, required: true },
         city: { type: String, required: true },
         state: { type: String, required: true },
-        country: { type: String, required: true, default: "INDIA" },
+        country: { type: String, required: true, default: "India" },
         pinCode: { type: Number, required: true },
         phoneNo: { type: Number, required: true }
     },
@@ -21,10 +21,13 @@ const orderSchema = new mongoose_1.default.Schema({
             product: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'Product', required: true }
         }],
     user: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
-    paymentInfo: {
-        id: { type: String, required: true },
-        status: { type: String, required: true }
-    },
+    // paymentInfo: {
+    //   id: { type: String, required: true },
+    //   status: { type: String, required: true },
+    //   razorpay_order_id: { type: String } ,
+    //   razorpay_payment_id: {type: String,},
+    //   razorpay_signature: {type: String,},
+    // },
     paidAt: { type: Date, required: true },
     itemsPrice: { type: Number, required: true, default: 0 },
     taxPrice: { type: Number, required: true, default: 0 },

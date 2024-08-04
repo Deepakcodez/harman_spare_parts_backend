@@ -141,7 +141,7 @@ export const resetPassword = asyncHandler(
   }
 );
 
-//get user
+//get user by id
 export const getUserDetails = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const user = await User.findById(req.user?.id);

@@ -112,7 +112,7 @@ exports.resetPassword = (0, asyncHandler_1.default)((req, resp, next) => __await
     yield user.save();
     (0, JWTtoken_1.sendToken)(user, 200, resp);
 }));
-//get user
+//get user by id
 exports.getUserDetails = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     const user = yield user_model_1.default.findById((_a = req.user) === null || _a === void 0 ? void 0 : _a.id);
