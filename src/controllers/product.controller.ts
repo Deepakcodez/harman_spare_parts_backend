@@ -4,20 +4,39 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
 import mongoose from "mongoose";
+import { uploadImageOnCloudiary } from "../utils/cloudinary";
 // import { redis } from "..";
 
 // Create a new product
 export const createProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    req.body.user = req.user?.id;
-    const productDetail = req.body;
-    console.log(">>>>>>>>>>>", productDetail);
+    const user = req.user?.id;
+    const {name, description, price, stock, category, isFreeDelivery} = req.body;
+    const productImage = req.file?.fieldname;
+    const productImagePath = req.file?.path;
 
-    if (!productDetail.name || !productDetail.price) {
+
+    if (!name || !price) {
       return next(new ErrorHandler("Name and price are required", 400));
     }
-
-    const product = await Product.create(productDetail);
+    //upload image on cloudinary
+    const {secure_url, public_id} = await uploadImageOnCloudiary(productImagePath, "products")
+    if(!secure_url){
+      return next(new ErrorHandler("error in uploading image", 404));
+    }
+    const product = await Product.create({
+      name,
+      description,
+      price,
+      stock,
+      isFreeDelivery,
+      category,
+      user,
+      images : {
+        public_id ,
+        url : secure_url
+      }
+    });
 
     res.status(201).json({
       success: true,

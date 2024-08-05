@@ -37,6 +37,7 @@ export const shippingAddress = asyncHandler(
           shipping.country = country;
           shipping.pinCode = pinCode;
           shipping.phoneNo = phoneNo;
+          shipping.user = userId;
           await shipping.save();
         } else {
           // Create new shipping address
