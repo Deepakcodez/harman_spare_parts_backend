@@ -17,17 +17,36 @@ const product_model_1 = __importDefault(require("../model/product.model"));
 const errorHandler_1 = require("../utils/errorHandler");
 const APIfeature_1 = require("../utils/APIfeature");
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
+const cloudinary_1 = require("../utils/cloudinary");
 // import { redis } from "..";
 // Create a new product
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    req.body.user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-    const productDetail = req.body;
-    console.log(">>>>>>>>>>>", productDetail);
-    if (!productDetail.name || !productDetail.price) {
+    var _a, _b, _c;
+    const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
+    const { name, description, price, stock, category, isFreeDelivery } = req.body;
+    const productImage = (_b = req.file) === null || _b === void 0 ? void 0 : _b.fieldname;
+    const productImagePath = (_c = req.file) === null || _c === void 0 ? void 0 : _c.path;
+    if (!name || !price) {
         return next(new errorHandler_1.ErrorHandler("Name and price are required", 400));
     }
-    const product = yield product_model_1.default.create(productDetail);
+    //upload image on cloudinary
+    const { secure_url, public_id } = yield (0, cloudinary_1.uploadImageOnCloudiary)(productImagePath, "products");
+    if (!secure_url) {
+        return next(new errorHandler_1.ErrorHandler("error in uploading image", 404));
+    }
+    const product = yield product_model_1.default.create({
+        name,
+        description,
+        price,
+        stock,
+        isFreeDelivery,
+        category,
+        user,
+        images: {
+            public_id,
+            url: secure_url
+        }
+    });
     res.status(201).json({
         success: true,
         product,
@@ -105,11 +124,11 @@ exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(v
 }));
 //product review
 exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b, _c;
+    var _d, _e;
     const { rating, comment, productId } = req.body;
     const review = {
-        user: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id,
-        name: (_c = req.user) === null || _c === void 0 ? void 0 : _c.name,
+        user: (_d = req.user) === null || _d === void 0 ? void 0 : _d._id,
+        name: (_e = req.user) === null || _e === void 0 ? void 0 : _e.name,
         rating: Number(rating),
         comment,
     };

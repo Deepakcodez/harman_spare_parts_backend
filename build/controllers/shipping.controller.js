@@ -43,6 +43,7 @@ exports.shippingAddress = (0, asyncHandler_1.default)((req, res, next) => __awai
             shipping.country = country;
             shipping.pinCode = pinCode;
             shipping.phoneNo = phoneNo;
+            shipping.user = userId;
             yield shipping.save();
         }
         else {
