@@ -29,11 +29,14 @@ const uploadImageOnCloudiary = (filePath, folderName) => __awaiter(void 0, void 
         const uploadResult = yield cloudinary.uploader.upload(filePath, {
             folder: folderName,
         });
-        try {
-            fs_1.default.unlinkSync(filePath);
-        }
-        catch (error) {
-            console.log("failed to delete image from server");
+        // Ensure the file exists before attempting to delete it
+        if (fs_1.default.existsSync(filePath)) {
+            try {
+                fs_1.default.unlinkSync(filePath);
+            }
+            catch (error) {
+                console.error("Failed to delete image from server:", error);
+            }
         }
         return {
             secure_url: uploadResult.secure_url,
@@ -41,7 +44,7 @@ const uploadImageOnCloudiary = (filePath, folderName) => __awaiter(void 0, void 
         };
     }
     catch (error) {
-        throw new Error(error);
+        throw new Error(`Error uploading image: ${error.message}`);
     }
 });
 exports.uploadImageOnCloudiary = uploadImageOnCloudiary;

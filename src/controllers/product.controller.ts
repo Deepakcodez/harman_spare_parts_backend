@@ -12,7 +12,6 @@ export const createProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const user = req.user?.id;
     const {name, description, price, stock, category, isFreeDelivery} = req.body;
-    const productImage = req.file?.fieldname;
     const productImagePath = req.file?.path;
 
 

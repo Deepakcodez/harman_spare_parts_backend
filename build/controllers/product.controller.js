@@ -21,11 +21,10 @@ const cloudinary_1 = require("../utils/cloudinary");
 // import { redis } from "..";
 // Create a new product
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c;
+    var _a, _b;
     const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
     const { name, description, price, stock, category, isFreeDelivery } = req.body;
-    const productImage = (_b = req.file) === null || _b === void 0 ? void 0 : _b.fieldname;
-    const productImagePath = (_c = req.file) === null || _c === void 0 ? void 0 : _c.path;
+    const productImagePath = (_b = req.file) === null || _b === void 0 ? void 0 : _b.path;
     if (!name || !price) {
         return next(new errorHandler_1.ErrorHandler("Name and price are required", 400));
     }
@@ -124,11 +123,11 @@ exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(v
 }));
 //product review
 exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _d, _e;
+    var _c, _d;
     const { rating, comment, productId } = req.body;
     const review = {
-        user: (_d = req.user) === null || _d === void 0 ? void 0 : _d._id,
-        name: (_e = req.user) === null || _e === void 0 ? void 0 : _e.name,
+        user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id,
+        name: (_d = req.user) === null || _d === void 0 ? void 0 : _d.name,
         rating: Number(rating),
         comment,
     };
