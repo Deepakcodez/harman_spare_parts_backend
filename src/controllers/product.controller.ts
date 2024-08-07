@@ -18,11 +18,15 @@ export const createProduct = asyncHandler(
     if (!name || !price) {
       return next(new ErrorHandler("Name and price are required", 400));
     }
-    //upload image on cloudinary
-    const {secure_url, public_id} = await uploadImageOnCloudiary(productImagePath, "products")
-    if(!secure_url){
-      return next(new ErrorHandler("error in uploading image", 404));
+    // Upload image to Cloudinary
+    const result = await uploadImageOnCloudiary(productImagePath, 'products');
+    if (!result) {
+      return next(new ErrorHandler("Error uploading image", 500));
     }
+
+    const { secure_url, public_id } = result;
+
+    
     const product = await Product.create({
       name,
       description,

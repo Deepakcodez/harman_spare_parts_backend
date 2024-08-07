@@ -28,11 +28,12 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
     if (!name || !price) {
         return next(new errorHandler_1.ErrorHandler("Name and price are required", 400));
     }
-    //upload image on cloudinary
-    const { secure_url, public_id } = yield (0, cloudinary_1.uploadImageOnCloudiary)(productImagePath, "products");
-    if (!secure_url) {
-        return next(new errorHandler_1.ErrorHandler("error in uploading image", 404));
+    // Upload image to Cloudinary
+    const result = yield (0, cloudinary_1.uploadImageOnCloudiary)(productImagePath, 'products');
+    if (!result) {
+        return next(new errorHandler_1.ErrorHandler("Error uploading image", 500));
     }
+    const { secure_url, public_id } = result;
     const product = yield product_model_1.default.create({
         name,
         description,

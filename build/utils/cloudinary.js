@@ -14,37 +14,45 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadImageOnCloudiary = void 0;
 const cloudinary_1 = __importDefault(require("cloudinary"));
-const fs_1 = __importDefault(require("fs"));
+const promises_1 = __importDefault(require("fs/promises")); // Use promises version of fs
 const cloudinary = cloudinary_1.default.v2;
 cloudinary.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET,
 });
-const uploadImageOnCloudiary = (filePath, folderName) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!filePath) {
-        throw new Error("File path is undefined");
-    }
+const uploadImageOnCloudiary = (localFilePath, folderName) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        const uploadResult = yield cloudinary.uploader.upload(filePath, {
-            folder: folderName,
-        });
-        // Ensure the file exists before attempting to delete it
-        if (fs_1.default.existsSync(filePath)) {
-            try {
-                fs_1.default.unlinkSync(filePath);
-            }
-            catch (error) {
-                console.error("Failed to delete image from server:", error);
-            }
+        if (!localFilePath) {
+            throw new Error("Invalid file path");
         }
+        // Upload file to Cloudinary
+        const response = yield cloudinary.uploader.upload(localFilePath, {
+            folder: folderName, // Specify the folder name
+            resource_type: "auto",
+        });
+        console.log("File is uploaded on Cloudinary", response.secure_url);
+        // Delete the local file after successful upload
+        yield promises_1.default.unlink(localFilePath);
+        console.log("Local file deleted successfully");
         return {
-            secure_url: uploadResult.secure_url,
-            public_id: uploadResult.public_id,
+            secure_url: response.secure_url,
+            public_id: response.public_id,
         };
     }
     catch (error) {
-        throw new Error(`Error uploading image: ${error.message}`);
+        console.error("Error uploading file to Cloudinary:", error.message);
+        try {
+            // Attempt to delete the local file even if the upload failed
+            if (localFilePath) {
+                yield promises_1.default.unlink(localFilePath);
+                console.log("Local file deleted successfully");
+            }
+        }
+        catch (unlinkError) {
+            console.error("Error deleting local file:", unlinkError.message);
+        }
+        return null;
     }
 });
 exports.uploadImageOnCloudiary = uploadImageOnCloudiary;

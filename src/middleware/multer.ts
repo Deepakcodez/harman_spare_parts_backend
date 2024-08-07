@@ -3,22 +3,33 @@ import path from 'path'
 import {v4 as uuidv4} from 'uuid'
 import fs from 'fs'
 
-// Ensure the directory exists
-const tempDir = path.join(__dirname, 'public', 'temp');
-if (!fs.existsSync(tempDir)) {
-  fs.mkdirSync(tempDir, { recursive: true });
-}
 
 
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-      cb(null, tempDir)
+
+
+export const uploader = multer({
+  storage: multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, path.resolve(__dirname, 'public/temp'));
     },
-    filename: function (req, file, cb) {
+    filename: (req, file, cb) => {
       const newFileName = uuidv4() + path.extname(file.originalname)
 
       cb(null,newFileName)
-    }
-  })
-  
-  export const upload = multer({ storage: storage })
+    },
+  }),
+  limits: { fileSize: 1048576 }, // 1MB
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
