@@ -4,7 +4,8 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
 import mongoose from "mongoose";
-import { uploadImageOnCloudiary } from "../utils/cloudinary";
+import { uploadToCloudinary } from "../utils/cloudinary";
+import { cloudinaryResponseTypes } from "../types/type";
 // import { redis } from "..";
 
 // Create a new product
@@ -12,41 +13,46 @@ export const createProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const user = req.user?.id;
     const {name, description, price, stock, category, isFreeDelivery} = req.body;
-    const productImagePath = req.file?.path;
+    
 
 
     if (!name || !price) {
       return next(new ErrorHandler("Name and price are required", 400));
     }
-    // Upload image to Cloudinary
-    const result = await uploadImageOnCloudiary(productImagePath, 'products');
-    if (!result) {
-      return next(new ErrorHandler("Error uploading image", 500));
-    }
-
-    const { secure_url, public_id } = result;
-
     
-    const product = await Product.create({
-      name,
-      description,
-      price,
-      stock,
-      isFreeDelivery,
-      category,
-      user,
-      images : {
-        public_id ,
-        url : secure_url
-      }
-    });
-
-    res.status(201).json({
-      success: true,
-      product,
-    });
-  }
-);
+    try {
+      let imageUrl = '';
+      let imagePublicId = '';
+  
+     
+    if (req.file) {
+      const uploadResult = await uploadToCloudinary(req.file.buffer);
+      imageUrl = uploadResult.secure_url;
+      imagePublicId = uploadResult.public_id;
+    }
+      const product = await Product.create({
+        name,
+        description,
+        price,
+        stock,
+        isFreeDelivery,
+        category,
+        user: req.user?.id, 
+        images: {
+          public_id: imagePublicId,
+          url: imageUrl,
+        },
+      });
+  
+      res.status(201).json({
+        success: true,
+        product,
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+  
 
 // Get all products
 export const getAllProducts = asyncHandler(

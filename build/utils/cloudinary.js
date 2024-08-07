@@ -12,47 +12,48 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadImageOnCloudiary = void 0;
-const cloudinary_1 = __importDefault(require("cloudinary"));
-const promises_1 = __importDefault(require("fs/promises")); // Use promises version of fs
-const cloudinary = cloudinary_1.default.v2;
-cloudinary.config({
+exports.uploadToCloudinary = exports.upload = void 0;
+const cloudinary_1 = require("cloudinary");
+const multer_1 = __importDefault(require("multer"));
+// Cloudinary configuration
+cloudinary_1.v2.config({
     cloud_name: process.env.CLOUD_NAME,
     api_key: process.env.API_KEY,
     api_secret: process.env.API_SECRET,
 });
-const uploadImageOnCloudiary = (localFilePath, folderName) => __awaiter(void 0, void 0, void 0, function* () {
-    try {
-        if (!localFilePath) {
-            throw new Error("Invalid file path");
-        }
-        // Upload file to Cloudinary
-        const response = yield cloudinary.uploader.upload(localFilePath, {
-            folder: folderName, // Specify the folder name
-            resource_type: "auto",
+// Use in-memory storage for multer
+const storage = multer_1.default.memoryStorage();
+exports.upload = (0, multer_1.default)({
+    storage,
+    limits: { fileSize: 1048576 }, // 1MB
+});
+// Utility function to wrap upload_stream in a promise
+const uploadStream = (fileBuffer, options) => {
+    return new Promise((resolve, reject) => {
+        const stream = cloudinary_1.v2.uploader.upload_stream(options, (error, result) => {
+            if (error) {
+                reject(error);
+            }
+            else {
+                resolve(result); // Type assertion here
+            }
         });
-        console.log("File is uploaded on Cloudinary", response.secure_url);
-        // Delete the local file after successful upload
-        yield promises_1.default.unlink(localFilePath);
-        console.log("Local file deleted successfully");
+        stream.end(fileBuffer);
+    });
+};
+// Middleware function to handle file upload to Cloudinary
+const uploadToCloudinary = (fileBuffer) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        // Upload to Cloudinary
+        const result = yield uploadStream(fileBuffer, { resource_type: 'auto' });
+        // Return Cloudinary data
         return {
-            secure_url: response.secure_url,
-            public_id: response.public_id,
+            secure_url: result.secure_url,
+            public_id: result.public_id,
         };
     }
     catch (error) {
-        console.error("Error uploading file to Cloudinary:", error.message);
-        try {
-            // Attempt to delete the local file even if the upload failed
-            if (localFilePath) {
-                yield promises_1.default.unlink(localFilePath);
-                console.log("Local file deleted successfully");
-            }
-        }
-        catch (unlinkError) {
-            console.error("Error deleting local file:", unlinkError.message);
-        }
-        return null;
+        throw error; // Throw error to be caught by the controller
     }
 });
-exports.uploadImageOnCloudiary = uploadImageOnCloudiary;
+exports.uploadToCloudinary = uploadToCloudinary;

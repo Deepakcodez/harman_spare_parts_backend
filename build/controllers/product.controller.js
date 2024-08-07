@@ -24,33 +24,38 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
     var _a, _b;
     const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
     const { name, description, price, stock, category, isFreeDelivery } = req.body;
-    const productImagePath = (_b = req.file) === null || _b === void 0 ? void 0 : _b.path;
     if (!name || !price) {
         return next(new errorHandler_1.ErrorHandler("Name and price are required", 400));
     }
-    // Upload image to Cloudinary
-    const result = yield (0, cloudinary_1.uploadImageOnCloudiary)(productImagePath, 'products');
-    if (!result) {
-        return next(new errorHandler_1.ErrorHandler("Error uploading image", 500));
-    }
-    const { secure_url, public_id } = result;
-    const product = yield product_model_1.default.create({
-        name,
-        description,
-        price,
-        stock,
-        isFreeDelivery,
-        category,
-        user,
-        images: {
-            public_id,
-            url: secure_url
+    try {
+        let imageUrl = '';
+        let imagePublicId = '';
+        if (req.file) {
+            const uploadResult = yield (0, cloudinary_1.uploadToCloudinary)(req.file.buffer);
+            imageUrl = uploadResult.secure_url;
+            imagePublicId = uploadResult.public_id;
         }
-    });
-    res.status(201).json({
-        success: true,
-        product,
-    });
+        const product = yield product_model_1.default.create({
+            name,
+            description,
+            price,
+            stock,
+            isFreeDelivery,
+            category,
+            user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id,
+            images: {
+                public_id: imagePublicId,
+                url: imageUrl,
+            },
+        });
+        res.status(201).json({
+            success: true,
+            product,
+        });
+    }
+    catch (error) {
+        next(error);
+    }
 }));
 // Get all products
 exports.getAllProducts = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {

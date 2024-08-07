@@ -6,4 +6,7 @@ export interface IRazorpayOrderOptions {
     notes?: Record<string, any>;
   }
 
-  
+  export interface cloudinaryResponseTypes{
+     secure_url: string ;
+     public_id : string ;
+  }

@@ -1,56 +1,49 @@
-import imageuploader from 'cloudinary';
-import fs from 'fs/promises'; // Use promises version of fs
+import { v2 as cloudinary } from 'cloudinary';
+import multer from 'multer';
+import { Request, Response, NextFunction } from 'express';
+import { UploadApiResponse } from 'cloudinary';
 
-const cloudinary = imageuploader.v2;
-
+// Cloudinary configuration
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
   api_secret: process.env.API_SECRET,
 });
 
-interface UploadResult {
-  secure_url: string;
-  public_id: string;
-}
+// Use in-memory storage for multer
+const storage = multer.memoryStorage();
 
-const uploadImageOnCloudiary = async (localFilePath: string | undefined, folderName: string): Promise<UploadResult | null> => {
-  try {
-    if (!localFilePath) {
-      throw new Error("Invalid file path");
-    }
+export const upload = multer({
+  storage,
+  limits: { fileSize: 1048576 }, // 1MB
+});
 
-    // Upload file to Cloudinary
-    const response = await cloudinary.uploader.upload(localFilePath, {
-      folder: folderName, // Specify the folder name
-      resource_type: "auto",
-    });
-
-    console.log("File is uploaded on Cloudinary", response.secure_url);
-
-    // Delete the local file after successful upload
-    await fs.unlink(localFilePath);
-    console.log("Local file deleted successfully");
-
-    return {
-      secure_url: response.secure_url,
-      public_id: response.public_id,
-    };
-  } catch (error: any) {
-    console.error("Error uploading file to Cloudinary:", error.message);
-
-    try {
-      // Attempt to delete the local file even if the upload failed
-      if (localFilePath) {
-        await fs.unlink(localFilePath);
-        console.log("Local file deleted successfully");
+// Utility function to wrap upload_stream in a promise
+const uploadStream = (fileBuffer: Buffer, options: any): Promise<UploadApiResponse> => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(options, (error, result) => {
+      if (error) {
+        reject(error);
+      } else {
+        resolve(result as UploadApiResponse); // Type assertion here
       }
-    } catch (unlinkError: any) {
-      console.error("Error deleting local file:", unlinkError.message);
-    }
-
-    return null;
-  }
+    });
+    stream.end(fileBuffer);
+  });
 };
 
-export { uploadImageOnCloudiary };
+// Middleware function to handle file upload to Cloudinary
+export const uploadToCloudinary = async (fileBuffer: Buffer): Promise<{ secure_url: string; public_id: string }> => {
+  try {
+    // Upload to Cloudinary
+    const result = await uploadStream(fileBuffer, { resource_type: 'auto' });
+
+    // Return Cloudinary data
+    return {
+      secure_url: result.secure_url,
+      public_id: result.public_id,
+    };
+  } catch (error) {
+    throw error; // Throw error to be caught by the controller
+  }
+};

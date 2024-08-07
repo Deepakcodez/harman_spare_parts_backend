@@ -10,17 +10,15 @@ import {
   productAllReview,
 } from "../controllers/product.controller";
 import { authorizedRole, isAuthenticatedUser } from "../middleware/auth";
-import { uploader } from "../middleware/multer";
-import path from "path";
+import { upload } from "../utils/cloudinary";
 
 const router = express.Router();
 
-router.use(express.static(path.resolve(__dirname, 'public')));
 
 router.post(
   "/admin/create",
-  uploader.single("images"),    
   isAuthenticatedUser,
+  upload.single('images'),
   asyncHandler(createProduct)
 );
 router.get("/allProducts", getAllProducts);
