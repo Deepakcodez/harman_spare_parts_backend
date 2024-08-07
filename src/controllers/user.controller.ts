@@ -5,6 +5,7 @@ import { sendToken } from "../utils/JWTtoken";
 import { sendEmail } from "../utils/sendEmail";
 import asyncHandler from "../middleware/asyncHandler";
 import crypto from "crypto";
+import axios from "axios";
 
 // register user
 export const register = async (
@@ -13,9 +14,12 @@ export const register = async (
   next: NextFunction
 ): Promise<void> => {
   const { name, email, password } = req.body;
+
   if (!name || !email || !password) {
     return next(new ErrorHandler("User credentials are not provided", 400));
   }
+
+
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });

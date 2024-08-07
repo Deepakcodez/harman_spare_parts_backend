@@ -26,19 +26,22 @@ export const newOrder = asyncHandler(
     const {
       shippingInfo,
       orderItems,
-      paymentInfo,
       itemsPrice,
       taxPrice,
       shippingPrice,
       totalPrice,
     } = req.body;
 
+
+    const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
+    const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
+
     try {
       if (!keyId || !keySecret) {
         throw new Error(
           "Razorpay key ID or key secret is not defined in environment variables"
         );
-      }
+      }                         
 
       const razorpay = new Razorpay({
         key_id: keyId,
