@@ -1,35 +1,37 @@
 import { NextFunction, Request, Response } from "express";
-import Product, { Review, } from "../model/product.model";
+import Product, { Review } from "../model/product.model";
 import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
 import mongoose from "mongoose";
 import { uploadToCloudinary } from "../utils/cloudinary";
 import { cloudinaryResponseTypes } from "../types/type";
+import NodeCache from "node-cache";
+
 // import { redis } from "..";
+
+const nodeCache = new NodeCache();
 
 // Create a new product
 export const createProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const user = req.user?.id;
-    const {name, description, price, stock, category, isFreeDelivery} = req.body;
-    
-
+    const { name, description, price, stock, category, isFreeDelivery } =
+      req.body;
 
     if (!name || !price) {
       return next(new ErrorHandler("Name and price are required", 400));
     }
-    
+
     try {
-      let imageUrl = '';
-      let imagePublicId = '';
-  
-     
-    if (req.file) {
-      const uploadResult = await uploadToCloudinary(req.file.buffer);
-      imageUrl = uploadResult.secure_url;
-      imagePublicId = uploadResult.public_id;
-    }
+      let imageUrl = "";
+      let imagePublicId = "";
+
+      if (req.file) {
+        const uploadResult = await uploadToCloudinary(req.file.buffer);
+        imageUrl = uploadResult.secure_url;
+        imagePublicId = uploadResult.public_id;
+      }
       const product = await Product.create({
         name,
         description,
@@ -37,13 +39,13 @@ export const createProduct = asyncHandler(
         stock,
         isFreeDelivery,
         category,
-        user: req.user?.id, 
+        user: req.user?.id,
         images: {
           public_id: imagePublicId,
           url: imageUrl,
         },
       });
-  
+
       res.status(201).json({
         success: true,
         product,
@@ -51,13 +53,28 @@ export const createProduct = asyncHandler(
     } catch (error) {
       next(error);
     }
-  });
-  
+  }
+);
 
 // Get all products
-export const getAllProducts = asyncHandler(
+export const getAllProducts = 
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const resultPerPage: number = 15;
+
+    const cacheKey = "cachedProducts"; 
+
+    // Check if products are in cache
+    const cachedProducts = nodeCache.get(cacheKey);
+
+    if (cachedProducts) {
+     res.status(200).json({
+        success: true,
+        message: "from cache",
+        products: JSON.parse(cachedProducts as string),
+        productCount: await Product.countDocuments(),
+      });
+      return;
+    }
 
     const productCount = await Product.countDocuments();
 
@@ -72,13 +89,16 @@ export const getAllProducts = asyncHandler(
       return next(new ErrorHandler("No products found", 404));
     }
 
-    res.status(200).json({
+    nodeCache.set(cacheKey, JSON.stringify(products));
+
+   res.status(200).json({
       success: true,
       products,
       productCount,
     });
+    return
   }
-);
+;
 // Update a product
 export const updateProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -123,7 +143,6 @@ export const deleteProduct = asyncHandler(
 export const getProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-    
 
     // const productExists = await redis.exists(`product:${id}`);
 
@@ -134,18 +153,17 @@ export const getProduct = asyncHandler(
     //   if (product) {
     //     return res.status(200).json({
     //       success: true,
-         
+
     //       product: JSON.parse(product),
     //     });
     //   }
     // }
-   
+
     const product = await Product.findById(id);
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
     }
-
 
     // await redis.set(`product:${id}`, JSON.stringify(product));
 
@@ -195,15 +213,13 @@ export const createProductReview = asyncHandler(
     });
     parseFloat((avg / product.reviews.length).toFixed(1));
 
-    await product.save({ validateBeforeSave: false });  
+    await product.save({ validateBeforeSave: false });
 
     res.status(200).json({
       success: true,
-      
     });
   }
 );
-
 
 //get all reviews
 export const productAllReview = asyncHandler(
@@ -213,19 +229,13 @@ export const productAllReview = asyncHandler(
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
     }
-  
+
     res.status(200).json({
       success: true,
-      reviews : product.reviews,
+      reviews: product.reviews,
     });
   }
 );
-
-
-
-
-
-
 
 //delete review
 // export const deleteReview = asyncHandler(

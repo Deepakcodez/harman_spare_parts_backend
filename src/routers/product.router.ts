@@ -21,7 +21,7 @@ router.post(
   upload.single('images'),
   asyncHandler(createProduct)
 );
-router.get("/allProducts", getAllProducts);
+router.get("/allProducts", asyncHandler(getAllProducts));
 router.put(
   "/admin/update/:id",
   isAuthenticatedUser,
