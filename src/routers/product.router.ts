@@ -18,7 +18,7 @@ const router = express.Router();
 router.post(
   "/admin/create",
   isAuthenticatedUser,
-  upload.single('images'),
+  upload.array('images', 5),
   asyncHandler(createProduct)
 );
 router.get("/allProducts", asyncHandler(getAllProducts));

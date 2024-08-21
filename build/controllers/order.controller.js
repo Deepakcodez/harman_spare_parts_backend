@@ -29,6 +29,7 @@ const generateReceiptId = () => {
 // Create new Order
 exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    console.log('>>>>>>>>>>>inside new order controller');
     const { shippingInfo, orderItems, itemsPrice, taxPrice, shippingPrice, totalPrice, } = req.body;
     const keyId = process.env.RAZORPAY_ID;
     const keySecret = process.env.RAZORPAY_SECRET;

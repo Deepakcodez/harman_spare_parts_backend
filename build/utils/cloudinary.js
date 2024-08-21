@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.uploadToCloudinary = exports.upload = void 0;
+exports.uploadMultipleToCloudinary = exports.upload = void 0;
 const cloudinary_1 = require("cloudinary");
 const multer_1 = __importDefault(require("multer"));
 // Cloudinary configuration
@@ -42,18 +42,23 @@ const uploadStream = (fileBuffer, options) => {
     });
 };
 // Middleware function to handle file upload to Cloudinary
-const uploadToCloudinary = (fileBuffer) => __awaiter(void 0, void 0, void 0, function* () {
+const uploadMultipleToCloudinary = (fileBuffers) => __awaiter(void 0, void 0, void 0, function* () {
     try {
-        // Upload to Cloudinary
-        const result = yield uploadStream(fileBuffer, { resource_type: 'auto' });
-        // Return Cloudinary data
-        return {
+        // Upload all files to Cloudinary
+        const uploadPromises = fileBuffers.map((fileBuffer) => uploadStream(fileBuffer, {
+            resource_type: 'auto',
+            folder: 'products',
+        }));
+        // Wait for all uploads to complete
+        const results = yield Promise.all(uploadPromises);
+        // Return Cloudinary data for all images
+        return results.map(result => ({
             secure_url: result.secure_url,
             public_id: result.public_id,
-        };
+        }));
     }
     catch (error) {
         throw error; // Throw error to be caught by the controller
     }
 });
-exports.uploadToCloudinary = uploadToCloudinary;
+exports.uploadMultipleToCloudinary = uploadMultipleToCloudinary;

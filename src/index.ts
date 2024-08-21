@@ -61,8 +61,8 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/product", productRouter);
-app.use("/api/v1/order", orderRouter);
 app.use("/api/v1/cart", cartRouter);
+app.use("/api/v1/order", orderRouter);
 app.use("/api/v1/shipping", shippingRouter);
 
 app.use(errorMiddleware);

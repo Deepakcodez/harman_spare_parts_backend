@@ -28,6 +28,7 @@ export interface ProdDocument extends Document, UserReference {
   numberOfReviews: number;
   reviews: Review[];
   isFreeDelivery : boolean;
+  deliveryCharges : number;
   inCart : boolean;
 }
 
@@ -74,6 +75,11 @@ const productSchema = new Schema<ProdDocument>(
     numberOfReviews: {
       type: Number,
       default: 0,
+    },
+    deliveryCharges : {
+      type : Number,
+      default : 0,
+
     },
     isFreeDelivery: {
       type: Boolean,

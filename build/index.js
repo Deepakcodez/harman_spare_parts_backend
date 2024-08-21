@@ -10,7 +10,6 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const cors_1 = __importDefault(require("cors"));
 const dbConnection_1 = require("./utils/dbConnection");
 const error_1 = __importDefault(require("./middleware/error"));
-// import  Redis  from "ioredis";
 const PORT = process.env.PORT || 8000;
 //handling uncaught error
 process.on("uncaughtException", (err) => {
@@ -53,8 +52,8 @@ app.get("/", (req, res) => {
 });
 app.use("/api/v1/user", user_route_1.default);
 app.use("/api/v1/product", product_router_1.default);
-app.use("/api/v1/order", order_route_1.default);
 app.use("/api/v1/cart", cart_route_1.default);
+app.use("/api/v1/order", order_route_1.default);
 app.use("/api/v1/shipping", shipping_route_1.default);
 app.use(error_1.default);
 const server = app.listen(PORT, () => {

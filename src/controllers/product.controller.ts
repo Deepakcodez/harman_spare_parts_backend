@@ -3,9 +3,7 @@ import Product, { Review } from "../model/product.model";
 import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
-import mongoose from "mongoose";
-import { uploadToCloudinary } from "../utils/cloudinary";
-import { cloudinaryResponseTypes } from "../types/type";
+import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 import NodeCache from "node-cache";
 
 // import { redis } from "..";
@@ -24,14 +22,22 @@ export const createProduct = asyncHandler(
     }
 
     try {
-      let imageUrl = "";
-      let imagePublicId = "";
 
-      if (req.file) {
-        const uploadResult = await uploadToCloudinary(req.file.buffer);
-        imageUrl = uploadResult.secure_url;
-        imagePublicId = uploadResult.public_id;
+      let images : { public_id: string; url: string }[] = [];
+
+      if (Array.isArray(req.files) && req.files.length > 0) {
+        // Upload multiple files to Cloudinary
+        const uploadResults = await uploadMultipleToCloudinary(
+          (req.files as Express.Multer.File[]).map((file) => file.buffer)
+        );
+
+        images = uploadResults.map(result => ({
+          public_id: result.public_id,
+          url: result.secure_url,
+        }));
       }
+
+
       const product = await Product.create({
         name,
         description,
@@ -40,10 +46,7 @@ export const createProduct = asyncHandler(
         isFreeDelivery,
         category,
         user: req.user?.id,
-        images: {
-          public_id: imagePublicId,
-          url: imageUrl,
-        },
+        images,
       });
 
       res.status(201).json({
@@ -57,48 +60,50 @@ export const createProduct = asyncHandler(
 );
 
 // Get all products
-export const getAllProducts = 
-  async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const resultPerPage: number = 15;
+export const getAllProducts = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const resultPerPage: number = 15;
 
-    const cacheKey = "cachedProducts"; 
+  const cacheKey = "cachedProducts";
 
-    // Check if products are in cache
-    const cachedProducts = nodeCache.get(cacheKey);
+  // Check if products are in cache
+  const cachedProducts = nodeCache.get(cacheKey);
 
-    if (cachedProducts) {
-     res.status(200).json({
-        success: true,
-        message: "from cache",
-        products: JSON.parse(cachedProducts as string),
-        productCount: await Product.countDocuments(),
-      });
-      return;
-    }
-
-    const productCount = await Product.countDocuments();
-
-    const apiFeature = new APIfeature(Product.find(), req.query)
-      .search()
-      .filter()
-      .pagination(resultPerPage);
-
-    const products = await apiFeature.query;
-
-    if (products.length === 0) {
-      return next(new ErrorHandler("No products found", 404));
-    }
-
-    nodeCache.set(cacheKey, JSON.stringify(products));
-
-   res.status(200).json({
+  if (cachedProducts) {
+    res.status(200).json({
       success: true,
-      products,
-      productCount,
+      message: "from cache",
+      products: JSON.parse(cachedProducts as string),
+      productCount: await Product.countDocuments(),
     });
-    return
+    return;
   }
-;
+
+  const productCount = await Product.countDocuments();
+
+  const apiFeature = new APIfeature(Product.find(), req.query)
+    .search()
+    .filter()
+    .pagination(resultPerPage);
+
+  const products = await apiFeature.query;
+
+  if (products.length === 0) {
+    return next(new ErrorHandler("No products found", 404));
+  }
+
+  nodeCache.set(cacheKey, JSON.stringify(products));
+
+  res.status(200).json({
+    success: true,
+    products,
+    productCount,
+  });
+  return;
+};
 // Update a product
 export const updateProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -109,6 +114,8 @@ export const updateProduct = asyncHandler(
       new: true,
       runValidators: true,
     });
+
+    nodeCache.del("cachedProducts");
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
@@ -128,6 +135,8 @@ export const deleteProduct = asyncHandler(
 
     const product = await Product.findByIdAndDelete(id);
 
+    nodeCache.del("cachedProducts");
+
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
     }
@@ -143,21 +152,6 @@ export const deleteProduct = asyncHandler(
 export const getProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const { id } = req.params;
-
-    // const productExists = await redis.exists(`product:${id}`);
-
-    // if (productExists) {
-    //   console.log('>>>>>>>>>>>redis cached')
-    //   const product = await redis.get(`product:${id}`);
-
-    //   if (product) {
-    //     return res.status(200).json({
-    //       success: true,
-
-    //       product: JSON.parse(product),
-    //     });
-    //   }
-    // }
 
     const product = await Product.findById(id);
 
@@ -178,6 +172,8 @@ export const getProduct = asyncHandler(
 export const createProductReview = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { rating, comment, productId } = req.body;
+
+    console.log('>>>>>>>>>>> rating', rating)
 
     const review: Review = {
       user: req.user?._id,
@@ -207,14 +203,16 @@ export const createProductReview = asyncHandler(
       product.numberOfReviews = product.reviews.length;
     }
 
-    let avg = 0;
-    product.reviews.forEach((rev) => {
-      avg += rev.rating;
-    });
-    parseFloat((avg / product.reviews.length).toFixed(1));
+   // Calculate the average rating
+   const totalRating = product.reviews.reduce((acc, rev) => acc + rev.rating, 0);
+   const avgRating = parseFloat((totalRating / product.reviews.length).toFixed(1));
 
-    await product.save({ validateBeforeSave: false });
+   // Assign the calculated average rating back to the product's `ratings` field
+   product.ratings = avgRating;
 
+   await product.save({ validateBeforeSave: false });
+   
+    nodeCache.del("cachedProducts");
     res.status(200).json({
       success: true,
     });

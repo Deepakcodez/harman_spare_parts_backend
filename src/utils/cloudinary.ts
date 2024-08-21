@@ -33,16 +33,24 @@ const uploadStream = (fileBuffer: Buffer, options: any): Promise<UploadApiRespon
 };
 
 // Middleware function to handle file upload to Cloudinary
-export const uploadToCloudinary = async (fileBuffer: Buffer): Promise<{ secure_url: string; public_id: string }> => {
+export const uploadMultipleToCloudinary = async (fileBuffers: Buffer[]): Promise<{ secure_url: string; public_id: string }[]> => {
   try {
-    // Upload to Cloudinary
-    const result = await uploadStream(fileBuffer, { resource_type: 'auto' });
+    // Upload all files to Cloudinary
+    const uploadPromises = fileBuffers.map((fileBuffer) =>
+      uploadStream(fileBuffer, {
+        resource_type: 'auto',
+        folder: 'products',
+      })
+    );
 
-    // Return Cloudinary data
-    return {
+    // Wait for all uploads to complete
+    const results = await Promise.all(uploadPromises);
+
+    // Return Cloudinary data for all images
+    return results.map(result => ({
       secure_url: result.secure_url,
       public_id: result.public_id,
-    };
+    }));
   } catch (error) {
     throw error; // Throw error to be caught by the controller
   }

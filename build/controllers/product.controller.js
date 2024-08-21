@@ -18,7 +18,9 @@ const errorHandler_1 = require("../utils/errorHandler");
 const APIfeature_1 = require("../utils/APIfeature");
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const cloudinary_1 = require("../utils/cloudinary");
+const node_cache_1 = __importDefault(require("node-cache"));
 // import { redis } from "..";
+const nodeCache = new node_cache_1.default();
 // Create a new product
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -28,12 +30,14 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
         return next(new errorHandler_1.ErrorHandler("Name and price are required", 400));
     }
     try {
-        let imageUrl = '';
-        let imagePublicId = '';
-        if (req.file) {
-            const uploadResult = yield (0, cloudinary_1.uploadToCloudinary)(req.file.buffer);
-            imageUrl = uploadResult.secure_url;
-            imagePublicId = uploadResult.public_id;
+        let images = [];
+        if (Array.isArray(req.files) && req.files.length > 0) {
+            // Upload multiple files to Cloudinary
+            const uploadResults = yield (0, cloudinary_1.uploadMultipleToCloudinary)(req.files.map((file) => file.buffer));
+            images = uploadResults.map(result => ({
+                public_id: result.public_id,
+                url: result.secure_url,
+            }));
         }
         const product = yield product_model_1.default.create({
             name,
@@ -43,10 +47,7 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
             isFreeDelivery,
             category,
             user: (_b = req.user) === null || _b === void 0 ? void 0 : _b.id,
-            images: {
-                public_id: imagePublicId,
-                url: imageUrl,
-            },
+            images,
         });
         res.status(201).json({
             success: true,
@@ -58,8 +59,20 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
     }
 }));
 // Get all products
-exports.getAllProducts = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+const getAllProducts = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const resultPerPage = 15;
+    const cacheKey = "cachedProducts";
+    // Check if products are in cache
+    const cachedProducts = nodeCache.get(cacheKey);
+    if (cachedProducts) {
+        res.status(200).json({
+            success: true,
+            message: "from cache",
+            products: JSON.parse(cachedProducts),
+            productCount: yield product_model_1.default.countDocuments(),
+        });
+        return;
+    }
     const productCount = yield product_model_1.default.countDocuments();
     const apiFeature = new APIfeature_1.APIfeature(product_model_1.default.find(), req.query)
         .search()
@@ -69,12 +82,15 @@ exports.getAllProducts = (0, asyncHandler_1.default)((req, res, next) => __await
     if (products.length === 0) {
         return next(new errorHandler_1.ErrorHandler("No products found", 404));
     }
+    nodeCache.set(cacheKey, JSON.stringify(products));
     res.status(200).json({
         success: true,
         products,
         productCount,
     });
-}));
+    return;
+});
+exports.getAllProducts = getAllProducts;
 // Update a product
 exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
@@ -83,6 +99,7 @@ exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
         new: true,
         runValidators: true,
     });
+    nodeCache.del("cachedProducts");
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
@@ -95,6 +112,7 @@ exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 exports.deleteProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const product = yield product_model_1.default.findByIdAndDelete(id);
+    nodeCache.del("cachedProducts");
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
@@ -106,17 +124,6 @@ exports.deleteProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 // Get a single product
 exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    // const productExists = await redis.exists(`product:${id}`);
-    // if (productExists) {
-    //   console.log('>>>>>>>>>>>redis cached')
-    //   const product = await redis.get(`product:${id}`);
-    //   if (product) {
-    //     return res.status(200).json({
-    //       success: true,
-    //       product: JSON.parse(product),
-    //     });
-    //   }
-    // }
     const product = yield product_model_1.default.findById(id);
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
@@ -131,6 +138,7 @@ exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(v
 exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _c, _d;
     const { rating, comment, productId } = req.body;
+    console.log('>>>>>>>>>>> rating', rating);
     const review = {
         user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id,
         name: (_d = req.user) === null || _d === void 0 ? void 0 : _d.name,
@@ -155,12 +163,13 @@ exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __
         product.reviews.push(review);
         product.numberOfReviews = product.reviews.length;
     }
-    let avg = 0;
-    product.reviews.forEach((rev) => {
-        avg += rev.rating;
-    });
-    parseFloat((avg / product.reviews.length).toFixed(1));
+    // Calculate the average rating
+    const totalRating = product.reviews.reduce((acc, rev) => acc + rev.rating, 0);
+    const avgRating = parseFloat((totalRating / product.reviews.length).toFixed(1));
+    // Assign the calculated average rating back to the product's `ratings` field
+    product.ratings = avgRating;
     yield product.save({ validateBeforeSave: false });
+    nodeCache.del("cachedProducts");
     res.status(200).json({
         success: true,
     });
