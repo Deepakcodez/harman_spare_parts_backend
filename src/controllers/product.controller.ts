@@ -4,11 +4,9 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
-import NodeCache from "node-cache";
 
 // import { redis } from "..";
 
-const nodeCache = new NodeCache();
 
 // Create a new product
 export const createProduct = asyncHandler(
@@ -101,7 +99,6 @@ export const updateProduct = asyncHandler(
       runValidators: true,
     });
 
-    nodeCache.del("cachedProducts");
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
@@ -197,7 +194,6 @@ export const createProductReview = asyncHandler(
 
    await product.save({ validateBeforeSave: false });
    
-    nodeCache.del("cachedProducts");
     res.status(200).json({
       success: true,
     });

@@ -18,9 +18,7 @@ const errorHandler_1 = require("../utils/errorHandler");
 const APIfeature_1 = require("../utils/APIfeature");
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const cloudinary_1 = require("../utils/cloudinary");
-const node_cache_1 = __importDefault(require("node-cache"));
 // import { redis } from "..";
-const nodeCache = new node_cache_1.default();
 // Create a new product
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
@@ -61,18 +59,6 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 // Get all products
 const getAllProducts = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const resultPerPage = 15;
-    const cacheKey = "cachedProducts";
-    // Check if products are in cache
-    const cachedProducts = nodeCache.get(cacheKey);
-    if (cachedProducts) {
-        res.status(200).json({
-            success: true,
-            message: "from cache",
-            products: JSON.parse(cachedProducts),
-            productCount: yield product_model_1.default.countDocuments(),
-        });
-        return;
-    }
     const productCount = yield product_model_1.default.countDocuments();
     const apiFeature = new APIfeature_1.APIfeature(product_model_1.default.find(), req.query)
         .search()
@@ -82,7 +68,6 @@ const getAllProducts = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     if (products.length === 0) {
         return next(new errorHandler_1.ErrorHandler("No products found", 404));
     }
-    nodeCache.set(cacheKey, JSON.stringify(products));
     res.status(200).json({
         success: true,
         products,
@@ -99,7 +84,6 @@ exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
         new: true,
         runValidators: true,
     });
-    nodeCache.del("cachedProducts");
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
@@ -112,7 +96,6 @@ exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 exports.deleteProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const product = yield product_model_1.default.findByIdAndDelete(id);
-    nodeCache.del("cachedProducts");
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
@@ -169,7 +152,6 @@ exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __
     // Assign the calculated average rating back to the product's `ratings` field
     product.ratings = avgRating;
     yield product.save({ validateBeforeSave: false });
-    nodeCache.del("cachedProducts");
     res.status(200).json({
         success: true,
     });
