@@ -67,20 +67,7 @@ export const getAllProducts = async (
 ): Promise<void> => {
   const resultPerPage: number = 15;
 
-  const cacheKey = "cachedProducts";
 
-  // Check if products are in cache
-  const cachedProducts = nodeCache.get(cacheKey);
-
-  if (cachedProducts) {
-    res.status(200).json({
-      success: true,
-      message: "from cache",
-      products: JSON.parse(cachedProducts as string),
-      productCount: await Product.countDocuments(),
-    });
-    return;
-  }
 
   const productCount = await Product.countDocuments();
 
@@ -95,7 +82,6 @@ export const getAllProducts = async (
     return next(new ErrorHandler("No products found", 404));
   }
 
-  nodeCache.set(cacheKey, JSON.stringify(products));
 
   res.status(200).json({
     success: true,
@@ -135,7 +121,6 @@ export const deleteProduct = asyncHandler(
 
     const product = await Product.findByIdAndDelete(id);
 
-    nodeCache.del("cachedProducts");
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
