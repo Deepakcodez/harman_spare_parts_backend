@@ -38,6 +38,9 @@ const productSchema = new mongoose_1.Schema({
         type: Number,
         required: [true, "please enter product price"],
     },
+    refPrice: {
+        type: Number,
+    },
     ratings: {
         type: Number,
         default: 0,

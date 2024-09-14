@@ -12,7 +12,7 @@ import { uploadMultipleToCloudinary } from "../utils/cloudinary";
 export const createProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const user = req.user?.id;
-    const { name, description, price, stock, category, isFreeDelivery } =
+    const { name, description, price,refPrice, stock, category, isFreeDelivery } =
       req.body;
 
     if (!name || !price) {
@@ -40,6 +40,7 @@ export const createProduct = asyncHandler(
         name,
         description,
         price,
+        refPrice,
         stock,
         isFreeDelivery,
         category,

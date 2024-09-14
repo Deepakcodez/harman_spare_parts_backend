@@ -21,7 +21,7 @@ const generateReceiptId = (): string => {
 
 
 // Create new Order
-export const newOrder = asyncHandler(
+export const  newOrder = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     console.log('>>>>>>>>>>>inside new order controller' )
     const {

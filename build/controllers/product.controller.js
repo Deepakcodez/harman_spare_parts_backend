@@ -23,7 +23,7 @@ const cloudinary_1 = require("../utils/cloudinary");
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     const user = (_a = req.user) === null || _a === void 0 ? void 0 : _a.id;
-    const { name, description, price, stock, category, isFreeDelivery } = req.body;
+    const { name, description, price, refPrice, stock, category, isFreeDelivery } = req.body;
     if (!name || !price) {
         return next(new errorHandler_1.ErrorHandler("Name and price are required", 400));
     }
@@ -41,6 +41,7 @@ exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
             name,
             description,
             price,
+            refPrice,
             stock,
             isFreeDelivery,
             category,

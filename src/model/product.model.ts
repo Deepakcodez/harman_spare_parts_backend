@@ -21,6 +21,7 @@ export interface ProdDocument extends Document, UserReference {
   name: string;
   description: string;
   price: number;
+  refPrice?:number;
   ratings: number;
   images: Image[];
   category: string;
@@ -46,6 +47,9 @@ const productSchema = new Schema<ProdDocument>(
     price: {
       type: Number,
       required: [true, "please enter product price"],
+    },
+    refPrice:{
+      type: Number,
     },
     ratings: {
       type: Number,
