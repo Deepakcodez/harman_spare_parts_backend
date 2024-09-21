@@ -101,7 +101,7 @@ export const newOrder = asyncHandler(
       shippingPrice,
       totalPrice,
     } = req.body;
-    
+
     const order = await Order.create({
       shippingInfo,
       orderItems,
@@ -113,20 +113,20 @@ export const newOrder = asyncHandler(
       paidAt: Date.now(),
       user: req.user?._id,
     });
-    console.log('>>>>>>>>>>>', order)
+    console.log(">>>>>>>>>>>", order);
     const populatedOrder = await order.populate("user");
 
-    await User.updateOne({_id:userId}, { $push: { myOrders: populatedOrder?._id } });
-    //empty the cart
-    await Cart.updateOne(
-      { user: userId },
-      {
-        $set: {
-          products: [],
-          totalPrice: 0,
-        },
-      }
+    await User.updateOne(
+      { _id: userId },
+      { $push: { myOrders: populatedOrder?._id } }
     );
+    //empty the cart
+    await Cart.updateOne(userId, {
+      $set: {
+        products: [],
+        totalPrice: 0,
+      },
+    });
 
     res.status(201).json({
       success: true,
