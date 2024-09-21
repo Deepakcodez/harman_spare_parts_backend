@@ -11,6 +11,7 @@ import ShippingInfo, {
 } from "../model/shippingInfo.model";
 import Payment from "../model/payment.model";
 import User from "../model/user.model";
+import Cart from "../model/cart.model";
 const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
 const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
 
@@ -100,7 +101,7 @@ export const newOrder = asyncHandler(
       shippingPrice,
       totalPrice,
     } = req.body;
-
+    
     const order = await Order.create({
       shippingInfo,
       orderItems,
@@ -114,7 +115,11 @@ export const newOrder = asyncHandler(
     });
     console.log('>>>>>>>>>>>', order)
     const populatedOrder = await order.populate("user");
+
     await User.updateOne({_id:userId}, { $push: { myOrders: populatedOrder?._id } });
+    //empty the cart
+    await Cart.updateOne({ user: userId }, { $set: { products: [] } });
+    
     res.status(201).json({
       success: true,
       order: populatedOrder,
