@@ -114,7 +114,7 @@ export const newOrder = asyncHandler(
     });
     console.log('>>>>>>>>>>>', order)
     const populatedOrder = await order.populate("user");
-    await User.updateOne(userId, { $push: { myOrders: populatedOrder?._id } });
+    await User.updateOne({_id:userId}, { $push: { myOrders: populatedOrder?._id } });
     res.status(201).json({
       success: true,
       order: populatedOrder,
