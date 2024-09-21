@@ -14,6 +14,7 @@ export interface UserDocument extends Document {
   password: string;
   avatar: Avatar;
   cart: mongoose.Types.ObjectId[];
+  myOrders: mongoose.Types.ObjectId[];
   role: string;
   resetPasswordToken?: string;
   resetPasswordExpire?: Date;
@@ -44,6 +45,12 @@ const userSchema = new Schema<UserDocument>(
       select: false,
     },
     cart: [
+      {
+        type: mongoose.Types.ObjectId,
+        ref: "Cart",
+      },
+    ],
+    myOrders: [
       {
         type: mongoose.Types.ObjectId,
         ref: "Cart",

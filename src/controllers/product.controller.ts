@@ -155,9 +155,6 @@ export const getProduct = asyncHandler(
 export const createProductReview = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { rating, comment, productId } = req.body;
-
-    console.log('>>>>>>>>>>> rating', rating)
-
     const review: Review = {
       user: req.user?._id,
       name: req.user?.name,

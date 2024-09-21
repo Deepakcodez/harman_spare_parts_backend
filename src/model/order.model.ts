@@ -14,7 +14,7 @@ interface OrderItem {
 // Interface for payment information
 interface PaymentInfo {
   status: "Pending" | "Success";
-  razorpay_order_id?: string; 
+  // razorpay_order_id?: string; 
 }
 
 // Interface for the order document
@@ -45,7 +45,7 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   paymentInfo:{
     status : {type : String, required : true, default : "Pending"},
-    razorpay_order_id :  {type : String, required : true, }
+    // razorpay_order_id :  {type : String, required : true, }
   },
   paidAt: { type: Date, required: true },
   itemsPrice: { type: Number, required: true, default: 0 },
