@@ -118,8 +118,16 @@ export const newOrder = asyncHandler(
 
     await User.updateOne({_id:userId}, { $push: { myOrders: populatedOrder?._id } });
     //empty the cart
-    await Cart.updateOne({ user: userId }, { $set: { products: [] } });
-    
+    await Cart.updateOne(
+      { user: userId },
+      {
+        $set: {
+          products: [],
+          totalPrice: 0,
+        },
+      }
+    );
+
     res.status(201).json({
       success: true,
       order: populatedOrder,
