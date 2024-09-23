@@ -12,6 +12,7 @@ import ShippingInfo, {
 import Payment from "../model/payment.model";
 import User from "../model/user.model";
 import Cart from "../model/cart.model";
+import orders from "razorpay/dist/types/orders";
 const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
 const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
 
@@ -121,7 +122,7 @@ export const newOrder = asyncHandler(
       { $push: { myOrders: populatedOrder?._id } }
     );
     //empty the cart
-    await Cart.updateOne(userId, {
+    await Cart.updateOne({userId}, {
       $set: {
         products: [],
         totalPrice: 0,
@@ -250,7 +251,10 @@ export const deleteOrder = asyncHandler(
 
 export const updateOrder = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const order: OrderDocument | null = await Order.findById(req.params.id);
+
+    const { orderId, paymentStatus, orderStatus } = req.body;
+
+    const order: OrderDocument | null = await Order.findById(orderId);
 
     if (!order) {
       return next(new ErrorHandler("Order not found with this Id", 404));
@@ -262,14 +266,16 @@ export const updateOrder = asyncHandler(
       );
     }
 
-    if (req.body.status === "Shipped") {
+    if (orderStatus === "Delivered") {
       order.orderItems.forEach(async (o) => {
         await updateStock(o.product.toString(), o.quantity);
       });
     }
-    order.orderStatus = req.body.status;
+    order.orderStatus = orderStatus;
+    order.paymentInfo.status = paymentStatus;
 
-    if (req.body.status === "Delivered") {
+
+    if (orderStatus === "Delivered") {
       order.deliveredAt = new Date();
     }
 

@@ -11,6 +11,6 @@ router.get('/singleOrder/:id', isAuthenticatedUser, getSingleOrder);
 router.get('/myOrders', isAuthenticatedUser, myOrders);
 router.get('/admin/all/orders', isAuthenticatedUser,authorizedRole("admin"), getAllOrders);
 router.delete('/admin/remove/:id', isAuthenticatedUser,authorizedRole("admin"), deleteOrder);
-router.put('/admin/update/status/:id', isAuthenticatedUser,authorizedRole("admin"), updateOrder);
+router.put('/admin/update/status/', isAuthenticatedUser,authorizedRole("admin"), updateOrder);
 
 export default router;

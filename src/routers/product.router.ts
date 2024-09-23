@@ -8,6 +8,7 @@ import {
   getProduct,
   createProductReview,
   productAllReview,
+  getAllProductsAdmin,
 } from "../controllers/product.controller";
 import { authorizedRole, isAuthenticatedUser } from "../middleware/auth";
 import { upload } from "../utils/cloudinary";
@@ -37,5 +38,6 @@ router.delete(
 router.get("/product/:id", asyncHandler(getProduct));
 router.put("/create/review", isAuthenticatedUser, createProductReview);
 router.get("/reviews/:id", productAllReview);
+router.get("/admin/all", isAuthenticatedUser, authorizedRole("admin"), asyncHandler(getAllProductsAdmin));
 
 export default router;

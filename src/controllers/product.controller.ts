@@ -89,6 +89,27 @@ export const getAllProducts = async (
   });
   return;
 };
+
+// Get all products (Admin)
+export const getAllProductsAdmin = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+
+  const productCount = await Product.countDocuments();
+  const products = await Product.find();
+  if (products.length === 0) {
+    return next(new ErrorHandler("No products found", 404));
+  }
+  res.status(200).json({
+    success: true,
+    products,
+    productCount,
+  });
+  return;
+};
+
 // Update a product
 export const updateProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {

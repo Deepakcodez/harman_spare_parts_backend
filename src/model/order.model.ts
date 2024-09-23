@@ -28,7 +28,7 @@ export interface OrderDocument extends Document {
   taxPrice: number;
   shippingPrice: number;
   totalPrice: number;
-  orderStatus: string;
+  orderStatus: "Processing" | "Out-For-Delivery" | "Delivered" | "Returned";
   deliveredAt?: Date;
   createdAt: Date;
 }
