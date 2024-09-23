@@ -30,7 +30,7 @@ router.put(
   asyncHandler(updateProduct)
 );
 router.delete(
-  "/admin/delete/:id",
+  "/admin/delete",
   isAuthenticatedUser,
   authorizedRole("admin"),
   asyncHandler(deleteProduct)
