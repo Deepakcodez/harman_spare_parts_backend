@@ -213,7 +213,7 @@ export const myOrders = asyncHandler(
 // get all Orders -- Admin
 export const getAllOrders = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const orders = await Order.find().populate('shippingInfo'); ;
+    const orders = await Order.find().populate('shippingInfo','user'); ;
 
     let totalAmount: number = 0;
 
