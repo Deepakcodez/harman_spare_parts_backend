@@ -17,9 +17,10 @@ const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const order_model_1 = __importDefault(require("../model/order.model"));
 const errorHandler_1 = require("../utils/errorHandler");
 const product_model_1 = __importDefault(require("../model/product.model"));
-const razorpay_1 = __importDefault(require("razorpay"));
 const crypto_1 = __importDefault(require("crypto"));
 const payment_model_1 = __importDefault(require("../model/payment.model"));
+const user_model_1 = __importDefault(require("../model/user.model"));
+const cart_model_1 = __importDefault(require("../model/cart.model"));
 const keyId = process.env.RAZORPAY_ID;
 const keySecret = process.env.RAZORPAY_SECRET;
 // Function to generate a random receipt ID
@@ -27,54 +28,93 @@ const generateReceiptId = () => {
     return crypto_1.default.randomBytes(16).toString("hex");
 };
 // Create new Order
+// export const  newOrder = asyncHandler(
+//   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+//     console.log('>>>>>>>>>>>inside new order controller' )
+//     const {
+//       shippingInfo,
+//       orderItems,
+//       itemsPrice,
+//       taxPrice,
+//       shippingPrice,
+//       totalPrice,
+//     } = req.body;
+//     const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
+//     const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
+//     try {
+//       if (!keyId || !keySecret) {
+//         throw new Error(
+//           "Razorpay key ID or key secret is not defined in environment variables"
+//         );
+//       }
+//       const razorpay = new Razorpay({
+//         key_id: keyId,
+//         key_secret: keySecret,
+//       });
+//       const receiptId = generateReceiptId();
+//       const options = {
+//         amount: totalPrice * 100,
+//         currency: "INR",
+//         receipt: receiptId,
+//       };
+//       const razorpayOrder = await razorpay.orders.create(options);
+//       const order = await Order.create({
+//         shippingInfo,
+//         orderItems,
+//         paymentInfo: {
+//           razorpay_order_id: razorpayOrder.id,
+//         },
+//         itemsPrice,
+//         taxPrice,
+//         shippingPrice,
+//         totalPrice,
+//         paidAt: Date.now(),
+//         user: req.user?._id,
+//       });
+//       const populatedOrder = await order.populate('user');
+//       res.status(201).json({
+//         success: true,
+//         order: populatedOrder,
+//         razorpayOrder,
+//       });
+//     } catch (error) {
+//       console.error("Error creating Razorpay order:", error);
+//       res.status(500).json({
+//         success: false,
+//         message: "Unable to create order. Please try again.",
+//       });
+//     }
+//   }
+// );
 exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a;
-    console.log('>>>>>>>>>>>inside new order controller');
-    const { shippingInfo, orderItems, itemsPrice, taxPrice, shippingPrice, totalPrice, } = req.body;
-    const keyId = process.env.RAZORPAY_ID;
-    const keySecret = process.env.RAZORPAY_SECRET;
-    try {
-        if (!keyId || !keySecret) {
-            throw new Error("Razorpay key ID or key secret is not defined in environment variables");
-        }
-        const razorpay = new razorpay_1.default({
-            key_id: keyId,
-            key_secret: keySecret,
-        });
-        const receiptId = generateReceiptId();
-        const options = {
-            amount: totalPrice * 100,
-            currency: "INR",
-            receipt: receiptId,
-        };
-        const razorpayOrder = yield razorpay.orders.create(options);
-        const order = yield order_model_1.default.create({
-            shippingInfo,
-            orderItems,
-            paymentInfo: {
-                razorpay_order_id: razorpayOrder.id,
-            },
-            itemsPrice,
-            taxPrice,
-            shippingPrice,
-            totalPrice,
-            paidAt: Date.now(),
-            user: (_a = req.user) === null || _a === void 0 ? void 0 : _a._id,
-        });
-        const populatedOrder = yield order.populate('user');
-        res.status(201).json({
-            success: true,
-            order: populatedOrder,
-            razorpayOrder,
-        });
-    }
-    catch (error) {
-        console.error("Error creating Razorpay order:", error);
-        res.status(500).json({
-            success: false,
-            message: "Unable to create order. Please try again.",
-        });
-    }
+    var _a, _b;
+    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+    const { shippingInfo, orderItems, itemsPrice, paymentInfo, taxPrice, shippingPrice, totalPrice, userMessage } = req.body;
+    const order = yield order_model_1.default.create({
+        shippingInfo,
+        orderItems,
+        paymentInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        userMessage,
+        paidAt: Date.now(),
+        user: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id,
+    });
+    const populatedOrder = yield order.populate("user");
+    yield user_model_1.default.updateOne({ _id: userId }, { $push: { myOrders: populatedOrder === null || populatedOrder === void 0 ? void 0 : populatedOrder._id } });
+    //empty the cart
+    yield cart_model_1.default.updateOne({ userId }, {
+        $set: {
+            products: [],
+            totalPrice: 0,
+        },
+    });
+    res.status(201).json({
+        success: true,
+        order: populatedOrder,
+    });
 }));
 exports.paymentVerify = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
@@ -115,8 +155,8 @@ exports.getSingleOrder = (0, asyncHandler_1.default)((req, res, next) => __await
 }));
 // get logged in user  Orders
 exports.myOrders = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _b;
-    const orders = yield order_model_1.default.find({ user: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id }).populate('user');
+    var _c;
+    const orders = yield order_model_1.default.find({ user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id }).populate("user");
     res.status(200).json({
         success: true,
         orders,
@@ -124,7 +164,8 @@ exports.myOrders = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
 }));
 // get all Orders -- Admin
 exports.getAllOrders = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const orders = yield order_model_1.default.find();
+    const orders = yield order_model_1.default.find().populate('shippingInfo');
+    ;
     let totalAmount = 0;
     orders.forEach((order) => {
         totalAmount += order.totalPrice;
@@ -149,20 +190,22 @@ exports.deleteOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(
 }));
 // update Order Status -- Admin
 exports.updateOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const order = yield order_model_1.default.findById(req.params.id);
+    const { orderId, paymentStatus, orderStatus } = req.body;
+    const order = yield order_model_1.default.findById(orderId);
     if (!order) {
         return next(new errorHandler_1.ErrorHandler("Order not found with this Id", 404));
     }
     if (order.orderStatus === "Delivered") {
         return next(new errorHandler_1.ErrorHandler("You have already delivered this order", 400));
     }
-    if (req.body.status === "Shipped") {
+    if (orderStatus === "Delivered") {
         order.orderItems.forEach((o) => __awaiter(void 0, void 0, void 0, function* () {
             yield updateStock(o.product.toString(), o.quantity);
         }));
     }
-    order.orderStatus = req.body.status;
-    if (req.body.status === "Delivered") {
+    order.orderStatus = orderStatus;
+    order.paymentInfo.status = paymentStatus;
+    if (orderStatus === "Delivered") {
         order.deliveredAt = new Date();
     }
     yield order.save({ validateBeforeSave: false });

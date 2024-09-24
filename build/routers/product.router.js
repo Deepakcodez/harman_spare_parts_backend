@@ -16,4 +16,5 @@ router.delete("/admin/delete/:id", auth_1.isAuthenticatedUser, (0, auth_1.author
 router.get("/product/:id", (0, asyncHandler_1.default)(product_controller_1.getProduct));
 router.put("/create/review", auth_1.isAuthenticatedUser, product_controller_1.createProductReview);
 router.get("/reviews/:id", product_controller_1.productAllReview);
+router.get("/admin/all", auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), (0, asyncHandler_1.default)(product_controller_1.getAllProductsAdmin));
 exports.default = router;

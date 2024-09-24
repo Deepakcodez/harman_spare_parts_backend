@@ -9,4 +9,5 @@ const shipping_controller_1 = require("../controllers/shipping.controller");
 const router = express_1.default.Router();
 router.put('/shippingInfo', auth_1.isAuthenticatedUser, shipping_controller_1.shippingAddress);
 router.get('/getShippingInfo', auth_1.isAuthenticatedUser, shipping_controller_1.getShippingAddress);
+router.get('/getShippingInfo/:id', auth_1.isAuthenticatedUser, shipping_controller_1.getShippingAddressByShippingId);
 exports.default = router;

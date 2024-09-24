@@ -13,5 +13,5 @@ router.get('/singleOrder/:id', auth_1.isAuthenticatedUser, order_controller_1.ge
 router.get('/myOrders', auth_1.isAuthenticatedUser, order_controller_1.myOrders);
 router.get('/admin/all/orders', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), order_controller_1.getAllOrders);
 router.delete('/admin/remove/:id', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), order_controller_1.deleteOrder);
-router.put('/admin/update/status/:id', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), order_controller_1.updateOrder);
+router.put('/admin/update/status/', auth_1.isAuthenticatedUser, (0, auth_1.authorizedRole)("admin"), order_controller_1.updateOrder);
 exports.default = router;

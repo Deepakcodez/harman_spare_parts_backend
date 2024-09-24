@@ -12,10 +12,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getShippingAddress = exports.shippingAddress = void 0;
+exports.getShippingAddressByShippingId = exports.getShippingAddress = exports.shippingAddress = void 0;
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const errorHandler_1 = require("../utils/errorHandler");
 const shippingInfo_model_1 = __importDefault(require("../model/shippingInfo.model"));
+const user_model_1 = __importDefault(require("../model/user.model"));
 // //shipping address
 exports.shippingAddress = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -77,6 +78,32 @@ exports.getShippingAddress = (0, asyncHandler_1.default)((req, res, next) => __a
         res.status(200).json({
             success: true,
             shippingDetails
+        });
+    }
+    catch (error) {
+        console.error("Error in finding shipping info:", error);
+        res.status(500).json({
+            success: false,
+            message: "Unable to finding shipping info. Please try again.",
+        });
+    }
+}));
+//get shipping address Admin
+exports.getShippingAddressByShippingId = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const shippingId = req.params.id;
+    if (!shippingId) {
+        return next(new errorHandler_1.ErrorHandler("UnAuthorised shippingId", 400));
+    }
+    try {
+        const shippingDetails = yield shippingInfo_model_1.default.findOne({ _id: shippingId });
+        if (!shippingDetails)
+            return next(new errorHandler_1.ErrorHandler("No details provided", 400));
+        const userId = shippingDetails === null || shippingDetails === void 0 ? void 0 : shippingDetails.user;
+        const user = yield user_model_1.default.findById(userId);
+        const address = { shippingDetails, user };
+        res.status(200).json({
+            success: true,
+            address,
         });
     }
     catch (error) {

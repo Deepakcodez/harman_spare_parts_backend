@@ -116,7 +116,6 @@ export const newOrder = asyncHandler(
       paidAt: Date.now(),
       user: req.user?._id,
     });
-    console.log(">>>>>>>>>>>", order);
     const populatedOrder = await order.populate("user");
 
     await User.updateOne(

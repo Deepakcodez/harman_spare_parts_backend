@@ -12,7 +12,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.productAllReview = exports.createProductReview = exports.getProduct = exports.deleteProduct = exports.updateProduct = exports.getAllProducts = exports.createProduct = void 0;
+exports.productAllReview = exports.createProductReview = exports.getProduct = exports.deleteProduct = exports.updateProduct = exports.getAllProductsAdmin = exports.getAllProducts = exports.createProduct = void 0;
 const product_model_1 = __importDefault(require("../model/product.model"));
 const errorHandler_1 = require("../utils/errorHandler");
 const APIfeature_1 = require("../utils/APIfeature");
@@ -77,17 +77,37 @@ const getAllProducts = (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     return;
 });
 exports.getAllProducts = getAllProducts;
+// Get all products (Admin)
+const getAllProductsAdmin = (req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    const productCount = yield product_model_1.default.countDocuments();
+    const products = yield product_model_1.default.find();
+    if (products.length === 0) {
+        return next(new errorHandler_1.ErrorHandler("No products found", 404));
+    }
+    res.status(200).json({
+        success: true,
+        products,
+        productCount,
+    });
+    return;
+});
+exports.getAllProductsAdmin = getAllProductsAdmin;
 // Update a product
 exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
     const productDetail = req.body;
-    const product = yield product_model_1.default.findByIdAndUpdate(id, productDetail, {
+    // Fetch the existing product details
+    const existingProduct = yield product_model_1.default.findById(id);
+    if (!existingProduct) {
+        return next(new errorHandler_1.ErrorHandler("Product not found", 404));
+    }
+    // Merge the existing product data with the new data from the request
+    const updatedProductDetail = Object.assign(Object.assign({}, existingProduct.toObject()), productDetail);
+    // Now update the product with the merged details
+    const product = yield product_model_1.default.findByIdAndUpdate(id, updatedProductDetail, {
         new: true,
         runValidators: true,
     });
-    if (!product) {
-        return next(new errorHandler_1.ErrorHandler("Product not found", 404));
-    }
     res.status(200).json({
         success: true,
         product,
@@ -122,7 +142,6 @@ exports.getProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(v
 exports.createProductReview = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _c, _d;
     const { rating, comment, productId } = req.body;
-    console.log('>>>>>>>>>>> rating', rating);
     const review = {
         user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id,
         name: (_d = req.user) === null || _d === void 0 ? void 0 : _d.name,

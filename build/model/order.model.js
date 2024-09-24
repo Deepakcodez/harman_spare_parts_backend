@@ -16,7 +16,7 @@ const orderSchema = new mongoose_1.default.Schema({
     user: { type: mongoose_1.default.Schema.Types.ObjectId, ref: 'User', required: true },
     paymentInfo: {
         status: { type: String, required: true, default: "Pending" },
-        razorpay_order_id: { type: String, required: true, }
+        // razorpay_order_id :  {type : String, required : true, }
     },
     paidAt: { type: Date, required: true },
     itemsPrice: { type: Number, required: true, default: 0 },
@@ -24,6 +24,7 @@ const orderSchema = new mongoose_1.default.Schema({
     shippingPrice: { type: Number, required: true, default: 0 },
     totalPrice: { type: Number, required: true, default: 0 },
     orderStatus: { type: String, required: true, default: 'Processing' },
+    userMessage: { type: String, required: false },
     deliveredAt: Date,
     createdAt: { type: Date, default: Date.now }
 });

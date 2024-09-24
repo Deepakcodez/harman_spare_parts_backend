@@ -66,6 +66,12 @@ const userSchema = new mongoose_1.Schema({
             ref: "Cart",
         },
     ],
+    myOrders: [
+        {
+            type: mongoose_1.default.Types.ObjectId,
+            ref: "Cart",
+        },
+    ],
     avatar: {
         public_id: {
             type: String,
