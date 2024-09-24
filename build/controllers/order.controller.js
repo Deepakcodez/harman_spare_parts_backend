@@ -164,7 +164,7 @@ exports.myOrders = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
 }));
 // get all Orders -- Admin
 exports.getAllOrders = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const orders = yield order_model_1.default.find().populate('shippingInfo', 'user');
+    const orders = yield order_model_1.default.find().populate('shippingInfo user');
     ;
     let totalAmount = 0;
     orders.forEach((order) => {
