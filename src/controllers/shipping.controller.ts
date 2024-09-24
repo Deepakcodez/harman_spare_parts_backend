@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import asyncHandler from "../middleware/asyncHandler";
 import { ErrorHandler } from "../utils/errorHandler";
 import ShippingInfo, { ShippingInfoDocument } from '../model/shippingInfo.model'
+import User from "../model/user.model";
 
 
 
@@ -92,4 +93,43 @@ export const shippingAddress = asyncHandler(
        
     }
   );
+  
+
+
+
+  //get shipping address Admin
+  export const getShippingAddressByShippingId = asyncHandler(
+    async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const shippingId = req.params.id;
+     
+      if(!shippingId) {
+        return next(new ErrorHandler("UnAuthorised shippingId", 400));
+      }
+     
+      try {
+         const shippingDetails = await  ShippingInfo.findOne({_id : shippingId} )
+         if(!shippingDetails) return next(new ErrorHandler("No details provided", 400)); 
+         const userId = shippingDetails?.user;
+         const user = await User.findById(userId);
+  
+        const address = {shippingDetails, user};
+        res.status(200).json({
+          success: true,
+          address,
+
+        });
+  
+      } catch (error) {
+        console.error("Error in finding shipping info:", error);
+        res.status(500).json({
+          success: false,
+          message: "Unable to finding shipping info. Please try again.",
+        });
+      }
+  
+       
+    }
+  );
+  
+
   

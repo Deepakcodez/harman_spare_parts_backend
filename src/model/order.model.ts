@@ -29,6 +29,7 @@ export interface OrderDocument extends Document {
   shippingPrice: number;
   totalPrice: number;
   orderStatus: "Processing" | "Out-For-Delivery" | "Delivered" | "Returned";
+  userMessage?: string;
   deliveredAt?: Date;
   createdAt: Date;
 }
@@ -53,6 +54,7 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
   shippingPrice: { type: Number, required: true, default: 0 },
   totalPrice: { type: Number, required: true, default: 0 },
   orderStatus: { type: String, required: true, default: 'Processing' },
+  userMessage : { type: String, required: false },
   deliveredAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
