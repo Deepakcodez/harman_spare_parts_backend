@@ -101,6 +101,7 @@ export const newOrder = asyncHandler(
       taxPrice,
       shippingPrice,
       totalPrice,
+      userMessage
     } = req.body;
 
     const order = await Order.create({
@@ -111,6 +112,7 @@ export const newOrder = asyncHandler(
       taxPrice,
       shippingPrice,
       totalPrice,
+      userMessage,
       paidAt: Date.now(),
       user: req.user?._id,
     });
