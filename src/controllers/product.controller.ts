@@ -115,16 +115,25 @@ export const updateProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { id } = req.params;
     const productDetail = req.body;
+// Fetch the existing product details
+const existingProduct = await Product.findById(id);
 
-    const product = await Product.findByIdAndUpdate(id, productDetail, {
-      new: true,
-      runValidators: true,
-    });
+if (!existingProduct) {
+  return next(new ErrorHandler("Product not found", 404));
+}
 
+// Merge the existing product data with the new data from the request
+const updatedProductDetail = {
+  ...existingProduct.toObject(),
+  ...productDetail, // Only overwrite fields provided in the body
+};
 
-    if (!product) {
-      return next(new ErrorHandler("Product not found", 404));
-    }
+// Now update the product with the merged details
+const product = await Product.findByIdAndUpdate(id, updatedProductDetail, {
+  new: true,
+  runValidators: true,
+});
+
 
     res.status(200).json({
       success: true,
