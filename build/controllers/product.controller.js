@@ -122,7 +122,7 @@ exports.deleteProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
     }
     res.status(200).json({
         success: true,
-        message: "Product deleted successfully",
+        message: "Product deleted successfully ",
     });
 }));
 // Get a single product

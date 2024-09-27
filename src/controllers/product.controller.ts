@@ -156,7 +156,7 @@ export const deleteProduct = asyncHandler(
 
     res.status(200).json({
       success: true,
-      message: "Product deleted successfully",
+      message: "Product deleted successfully ",
     });
   }
 );
