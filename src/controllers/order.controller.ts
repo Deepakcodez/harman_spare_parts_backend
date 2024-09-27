@@ -217,7 +217,7 @@ export const getAllOrders = asyncHandler(
 
     let totalAmount: number = 0;
 
-    orders.forEach((order) => {
+    orders.forEach((order) => { 
       totalAmount += order.totalPrice;
     });
 
