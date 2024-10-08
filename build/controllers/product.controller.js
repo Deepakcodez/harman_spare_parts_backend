@@ -18,6 +18,7 @@ const errorHandler_1 = require("../utils/errorHandler");
 const APIfeature_1 = require("../utils/APIfeature");
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const cloudinary_1 = require("../utils/cloudinary");
+const cloudinary_2 = require("cloudinary");
 // import { redis } from "..";
 // Create a new product
 exports.createProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
@@ -116,10 +117,16 @@ exports.updateProduct = (0, asyncHandler_1.default)((req, res, next) => __awaite
 // Delete a product
 exports.deleteProduct = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const { id } = req.params;
-    const product = yield product_model_1.default.findByIdAndDelete(id);
+    // Find the product by its id
+    const product = yield product_model_1.default.findById(id);
     if (!product) {
         return next(new errorHandler_1.ErrorHandler("Product not found", 404));
     }
+    // Delete associated images from Cloudinary
+    const deleteImagePromises = product.images.map((image) => cloudinary_2.v2.uploader.destroy(image.public_id));
+    // Wait for all image deletions to complete
+    yield Promise.all(deleteImagePromises);
+    yield product_model_1.default.findByIdAndDelete(id);
     res.status(200).json({
         success: true,
         message: "Product deleted successfully ",

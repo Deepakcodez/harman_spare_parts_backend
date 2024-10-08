@@ -4,7 +4,7 @@ import { ErrorHandler } from "../utils/errorHandler";
 import { APIfeature } from "../utils/APIfeature";
 import asyncHandler from "../middleware/asyncHandler";
 import { uploadMultipleToCloudinary } from "../utils/cloudinary";
-
+import { v2 as cloudinary } from "cloudinary";
 // import { redis } from "..";
 
 
@@ -146,13 +146,23 @@ const product = await Product.findByIdAndUpdate(id, updatedProductDetail, {
 export const deleteProduct = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const { id } = req.params;
-
-    const product = await Product.findByIdAndDelete(id);
-
+    // Find the product by its id
+    const product = await Product.findById(id);
 
     if (!product) {
       return next(new ErrorHandler("Product not found", 404));
     }
+
+     // Delete associated images from Cloudinary
+     const deleteImagePromises = product.images.map((image: { public_id: string }) =>
+      cloudinary.uploader.destroy(image.public_id)
+    );
+
+    // Wait for all image deletions to complete
+    await Promise.all(deleteImagePromises);
+     await Product.findByIdAndDelete(id);
+
+   
 
     res.status(200).json({
       success: true,
