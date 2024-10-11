@@ -21,6 +21,49 @@ const generateReceiptId = (): string => {
   return crypto.randomBytes(16).toString("hex");
 };
 
+
+
+export const createRazorpayOrder = async (req:Request, res:Response) => {
+  try {
+    const { amount } = req.body; // Amount from frontend (in paisa)
+    console.log('>>>>>>>>>>>', amount, keyId, keySecret)
+
+    if (!keyId || !keySecret) {
+      throw new Error(
+        "Razorpay key ID or key secret is not defined in environment variables"
+      );
+    }
+    const receiptId = generateReceiptId(); // Generate unique receipt ID
+
+    const options = {
+      amount: amount * 100,
+      currency: "INR",
+      receipt: receiptId,
+    };
+
+   
+  
+    const razorpay = new Razorpay({
+      key_id: keyId,
+      key_secret: keySecret,
+    });
+
+
+    // Create the Razorpay order
+    const razorpayOrder = await razorpay.orders.create(options);
+
+    res.json({
+      success: true,
+      orderId: razorpayOrder.id,
+      amount: amount,
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: "Order creation failed", error });
+  }
+};
+
+
+
 // Create new Order
 export const newOrder = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -37,42 +80,14 @@ export const newOrder = asyncHandler(
     const userId = req.user?._id;
     const paymentMethod = paymentInfo.method;
 
-    console.log(">>>>>>>>>>>inside new order controller",paymentMethod);
-    const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
-    const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
+    console.log(">>>>>>>>>>>inside new order controller");
+
 
     try {
-      let paymentInfo = {};
 
       // Check if payment method is Online Payment and handle Razorpay order creation
       if (paymentMethod === "online") {
-        if (!keyId || !keySecret) {
-          throw new Error(
-            "Razorpay key ID or key secret is not defined in environment variables"
-          );
-        }
-
-        const razorpay = new Razorpay({
-          key_id: keyId,
-          key_secret: keySecret,
-        });
-
-        const receiptId = generateReceiptId(); // Generate unique receipt ID
-
-        const options = {
-          amount: totalPrice * 100, // Amount in paisa (₹1 = 100 paise)
-          currency: "INR",
-          receipt: receiptId,
-        };
-
-        // Create the Razorpay order
-        const razorpayOrder = await razorpay.orders.create(options);
-
-        paymentInfo = {
-          razorpay_order_id: razorpayOrder.id,
-          method: "online",
-          status: "Pending", // Initially pending until the payment is confirmed
-        };
+        
 
         // Create the order in the database
         const order = await Order.create({
@@ -93,11 +108,12 @@ export const newOrder = asyncHandler(
         res.status(201).json({
           success: true,
           order: populatedOrder,
-          razorpayOrder, // Send back Razorpay order details
         });
-      } else if (paymentMethod === "cod") {
+      }
+      
+      else if (paymentMethod === "cod") {
         // If payment method is COD, place the order without Razorpay
-        paymentInfo = {
+       let  paymentInfoData = {
           method: "Cash-On-Delivery",
           status: "Pending", // Status is pending for COD orders
         };
@@ -105,7 +121,7 @@ export const newOrder = asyncHandler(
         const order = await Order.create({
           shippingInfo,
           orderItems,
-          paymentInfo,
+          paymentInfo:paymentInfoData,
           itemsPrice,
           taxPrice,
           shippingPrice,
