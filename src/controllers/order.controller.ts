@@ -24,7 +24,6 @@ const generateReceiptId = (): string => {
 // Create new Order
 export const newOrder = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    console.log(">>>>>>>>>>>inside new order controller");
     const {
       shippingInfo,
       orderItems,
@@ -32,10 +31,12 @@ export const newOrder = asyncHandler(
       taxPrice,
       shippingPrice,
       totalPrice,
-      paymentMethod,
+      paymentInfo,
     } = req.body;
     const userId = req.user?._id;
+    const paymentMethod = paymentInfo.method;
 
+    console.log(">>>>>>>>>>>inside new order controller",paymentInfo);
     const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
     const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
 
