@@ -36,7 +36,7 @@ export const createRazorpayOrder = async (req:Request, res:Response) => {
     const receiptId = generateReceiptId(); // Generate unique receipt ID
 
     const options = {
-      amount: amount * 100,
+      amount: amount ,
       currency: "INR",
       receipt: receiptId,
     };
