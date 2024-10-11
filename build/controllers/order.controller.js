@@ -31,10 +31,10 @@ const generateReceiptId = () => {
 // Create new Order
 exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c, _d;
-    const { shippingInfo, orderItems, itemsPrice, taxPrice, shippingPrice, totalPrice, paymentInfo, } = req.body;
+    const { shippingInfo, orderItems, itemsPrice, taxPrice, shippingPrice, totalPrice, userMessage, paymentInfo, } = req.body;
     const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
     const paymentMethod = paymentInfo.method;
-    console.log(">>>>>>>>>>>inside new order controller", paymentInfo);
+    console.log(">>>>>>>>>>>inside new order controller", paymentMethod);
     const keyId = process.env.RAZORPAY_ID;
     const keySecret = process.env.RAZORPAY_SECRET;
     try {
@@ -58,7 +58,7 @@ exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
             const razorpayOrder = yield razorpay.orders.create(options);
             paymentInfo = {
                 razorpay_order_id: razorpayOrder.id,
-                paymentMethod: "Online-Payment",
+                method: "online",
                 status: "Pending", // Initially pending until the payment is confirmed
             };
             // Create the order in the database
@@ -68,6 +68,7 @@ exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
                 paymentInfo,
                 itemsPrice,
                 taxPrice,
+                userMessage,
                 shippingPrice,
                 totalPrice,
                 paidAt: Date.now(), // Razorpay doesn't confirm payment instantly
@@ -83,7 +84,7 @@ exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
         else if (paymentMethod === "cod") {
             // If payment method is COD, place the order without Razorpay
             paymentInfo = {
-                paymentMethod: "Cash-On-Delivery",
+                method: "Cash-On-Delivery",
                 status: "Pending", // Status is pending for COD orders
             };
             const order = yield order_model_1.default.create({
@@ -94,6 +95,7 @@ exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
                 taxPrice,
                 shippingPrice,
                 totalPrice,
+                userMessage,
                 paidAt: null, // Will be null since it's not paid yet (COD)
                 user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id,
             });
@@ -139,7 +141,7 @@ exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
 //       taxPrice,
 //       shippingPrice,
 //       totalPrice,
-//       userMessage
+//       userMessagehttp://localhost:3000/
 //     } = req.body;
 //     const order = await Order.create({
 //       shippingInfo,
@@ -172,29 +174,48 @@ exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(voi
 //   }
 // );
 exports.paymentVerify = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSignature = crypto_1.default
-        .createHmac("sha256", process.env.RAZORPAY_SECRET)
-        .update(body.toString())
-        .digest("hex");
-    const isAuthentic = expectedSignature === razorpay_signature;
-    if (isAuthentic) {
-        // Database comes here
-        yield payment_model_1.default.create({
-            razorpay_order_id,
-            razorpay_payment_id,
-            razorpay_signature,
-        });
-        const updatedOrder = yield order_model_1.default.findOneAndUpdate({ "paymentInfo.razorpay_order_id": razorpay_order_id }, { $set: { "paymentInfo.status": "Success" } }, { new: true });
-        if (!updatedOrder)
-            return next(new errorHandler_1.ErrorHandler("No details provided", 400));
-        res.redirect(`http://localhost:3000/products?reference=${razorpay_payment_id}`);
+    try {
+        const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+        // 1. Check if all the necessary data is provided
+        if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+            return next(new errorHandler_1.ErrorHandler("Missing payment details", 400));
+        }
+        // 2. Create body string to verify signature
+        const body = razorpay_order_id + "|" + razorpay_payment_id;
+        // 3. Generate expected signature using HMAC SHA256
+        const expectedSignature = crypto_1.default
+            .createHmac("sha256", process.env.RAZORPAY_SECRET)
+            .update(body)
+            .digest("hex");
+        // 4. Verify if the signature matches
+        const isAuthentic = expectedSignature === razorpay_signature;
+        if (isAuthentic) {
+            // Payment is authentic
+            // 5. Save payment info in the database
+            yield payment_model_1.default.create({
+                razorpay_order_id,
+                razorpay_payment_id,
+                razorpay_signature,
+            });
+            // 6. Update the order with success status
+            const updatedOrder = yield order_model_1.default.findOneAndUpdate({ "paymentInfo.razorpay_order_id": razorpay_order_id }, { $set: { "paymentInfo.status": "Success" } }, { new: true });
+            if (!updatedOrder) {
+                return next(new errorHandler_1.ErrorHandler("Order not found", 404));
+            }
+            // 7. Redirect to the success page with payment reference
+            res.redirect(`http://localhost:3000/products?reference=${razorpay_payment_id}`);
+        }
+        else {
+            // Signature mismatch
+            res.status(400).json({
+                success: false,
+                message: "Payment verification failed",
+            });
+        }
     }
-    else {
-        res.status(400).json({
-            success: false,
-        });
+    catch (error) {
+        console.error("Payment verification error:", error);
+        next(new errorHandler_1.ErrorHandler("Internal server error", 500));
     }
 }));
 // get Single Order

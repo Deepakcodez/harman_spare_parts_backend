@@ -31,12 +31,13 @@ export const newOrder = asyncHandler(
       taxPrice,
       shippingPrice,
       totalPrice,
+      userMessage,
       paymentInfo,
     } = req.body;
     const userId = req.user?._id;
     const paymentMethod = paymentInfo.method;
 
-    console.log(">>>>>>>>>>>inside new order controller",paymentInfo);
+    console.log(">>>>>>>>>>>inside new order controller",paymentMethod);
     const keyId: string | null | undefined = process.env.RAZORPAY_ID!;
     const keySecret: string | null | undefined = process.env.RAZORPAY_SECRET!;
 
@@ -69,7 +70,7 @@ export const newOrder = asyncHandler(
 
         paymentInfo = {
           razorpay_order_id: razorpayOrder.id,
-          paymentMethod: "Online-Payment",
+          method: "online",
           status: "Pending", // Initially pending until the payment is confirmed
         };
 
@@ -80,6 +81,7 @@ export const newOrder = asyncHandler(
           paymentInfo,
           itemsPrice,
           taxPrice,
+          userMessage,
           shippingPrice,
           totalPrice,
           paidAt: Date.now(), // Razorpay doesn't confirm payment instantly
@@ -96,7 +98,7 @@ export const newOrder = asyncHandler(
       } else if (paymentMethod === "cod") {
         // If payment method is COD, place the order without Razorpay
         paymentInfo = {
-          paymentMethod: "Cash-On-Delivery",
+          method: "Cash-On-Delivery",
           status: "Pending", // Status is pending for COD orders
         };
 
@@ -108,6 +110,7 @@ export const newOrder = asyncHandler(
           taxPrice,
           shippingPrice,
           totalPrice,
+          userMessage,
           paidAt: null, // Will be null since it's not paid yet (COD)
           user: req.user?._id,
         });
@@ -162,7 +165,7 @@ export const newOrder = asyncHandler(
 //       taxPrice,
 //       shippingPrice,
 //       totalPrice,
-//       userMessage
+//       userMessagehttp://localhost:3000/
 //     } = req.body;
 
 //     const order = await Order.create({
@@ -197,46 +200,64 @@ export const newOrder = asyncHandler(
 //     });
 //   }
 // );
-
 export const paymentVerify = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-      req.body;
+    try {
+      const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+        req.body;
 
-    const body = razorpay_order_id + "|" + razorpay_payment_id;
+      // 1. Check if all the necessary data is provided
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        return next(new ErrorHandler("Missing payment details", 400));
+      }
 
-    const expectedSignature = crypto
-      .createHmac("sha256", process.env.RAZORPAY_SECRET!)
-      .update(body.toString())
-      .digest("hex");
+      // 2. Create body string to verify signature
+      const body = razorpay_order_id + "|" + razorpay_payment_id;
 
-    const isAuthentic = expectedSignature === razorpay_signature;
+      // 3. Generate expected signature using HMAC SHA256
+      const expectedSignature = crypto
+        .createHmac("sha256", process.env.RAZORPAY_SECRET!)
+        .update(body)
+        .digest("hex");
 
-    if (isAuthentic) {
-      // Database comes here
+      // 4. Verify if the signature matches
+      const isAuthentic = expectedSignature === razorpay_signature;
 
-      await Payment.create({
-        razorpay_order_id,
-        razorpay_payment_id,
-        razorpay_signature,
-      });
+      if (isAuthentic) {
+        // Payment is authentic
 
-      const updatedOrder = await Order.findOneAndUpdate(
-        { "paymentInfo.razorpay_order_id": razorpay_order_id },
-        { $set: { "paymentInfo.status": "Success" } },
-        { new: true }
-      );
+        // 5. Save payment info in the database
+        await Payment.create({
+          razorpay_order_id,
+          razorpay_payment_id,
+          razorpay_signature,
+        });
 
-      if (!updatedOrder)
-        return next(new ErrorHandler("No details provided", 400));
+        // 6. Update the order with success status
+        const updatedOrder = await Order.findOneAndUpdate(
+          { "paymentInfo.razorpay_order_id": razorpay_order_id },
+          { $set: { "paymentInfo.status": "Success" } },
+          { new: true }
+        );
 
-      res.redirect(
-        `http://localhost:3000/products?reference=${razorpay_payment_id}`
-      );
-    } else {
-      res.status(400).json({
-        success: false,
-      });
+        if (!updatedOrder) {
+          return next(new ErrorHandler("Order not found", 404));
+        }
+
+        // 7. Redirect to the success page with payment reference
+        res.redirect(
+          `http://localhost:3000/products?reference=${razorpay_payment_id}`
+        );
+      } else {
+        // Signature mismatch
+        res.status(400).json({
+          success: false,
+          message: "Payment verification failed",
+        });
+      }
+    } catch (error) {
+      console.error("Payment verification error:", error);
+      next(new ErrorHandler("Internal server error", 500));
     }
   }
 );
