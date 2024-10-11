@@ -13,10 +13,12 @@ interface OrderItem {
 
 // Interface for payment information
 interface PaymentInfo {
-  status: "Pending" | "Success";
-  // razorpay_order_id?: string; 
+  method: "Online-Payment" | "Cash-On-Delivery"; // New field to indicate payment method
+  status: "Pending" | "Success" | "Failed"; // Add 'Failed' status for failed payments
+  razorpay_order_id?: string; 
+  razorpay_payment_id?: string;
+  razorpay_signature?: string;
 }
-
 // Interface for the order document
 export interface OrderDocument extends Document {
   shippingInfo:  mongoose.Types.ObjectId;
@@ -30,6 +32,7 @@ export interface OrderDocument extends Document {
   totalPrice: number;
   orderStatus: "Processing" | "Out-For-Delivery" | "Delivered" | "Returned";
   userMessage?: string;
+  isCOD: boolean;
   deliveredAt?: Date;
   createdAt: Date;
 }
@@ -44,17 +47,21 @@ const orderSchema = new mongoose.Schema<OrderDocument>({
     product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true }
   }],
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  paymentInfo:{
-    status : {type : String, required : true, default : "Pending"},
-    // razorpay_order_id :  {type : String, required : true, }
+  paymentInfo: {
+    method: { type: String, required: true }, // Razorpay or Cash-On-Delivery
+    status: { type: String, required: true, default: "Pending" },
+    razorpay_order_id: { type: String }, // Razorpay-specific field
+    razorpay_payment_id: { type: String }, // Razorpay-specific field
+    razorpay_signature: { type: String },  // Razorpay-specific field
   },
-  paidAt: { type: Date, required: true },
+  paidAt: { type: Date},
   itemsPrice: { type: Number, required: true, default: 0 },
   taxPrice: { type: Number, required: true, default: 0 },
   shippingPrice: { type: Number, required: true, default: 0 },
   totalPrice: { type: Number, required: true, default: 0 },
   orderStatus: { type: String, required: true, default: 'Processing' },
   userMessage : { type: String, required: false },
+  isCOD: { type: Boolean, required: true, default: false },
   deliveredAt: Date,
   createdAt: { type: Date, default: Date.now }
 });

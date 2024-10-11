@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
 
-// const uri: string = 'mongodb://127.0.0.1:27017/harman-spare-parts'; // for localhost mongo
-
-const uri: string | undefined = process.env.MONGO_URI;
+const uri: string = 'mongodb://127.0.0.1:27017/harman-spare-parts'; 
+// const uri: string | undefined = process.env.MONGO_URI;
 async function connectDB(): Promise<void> {
   try {
     await mongoose.connect(uri!);

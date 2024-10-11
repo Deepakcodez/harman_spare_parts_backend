@@ -14,8 +14,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.connectDB = void 0;
 const mongoose_1 = __importDefault(require("mongoose"));
-// const uri: string = 'mongodb://127.0.0.1:27017/harman-spare-parts'; // for localhost mongo
-const uri = process.env.MONGO_URI;
+const uri = 'mongodb://127.0.0.1:27017/harman-spare-parts';
+// const uri: string | undefined = process.env.MONGO_URI;
 function connectDB() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
