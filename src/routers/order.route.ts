@@ -6,8 +6,8 @@ import { newOrder,getSingleOrder, myOrders, getAllOrders,deleteOrder, updateOrde
 const router = express.Router();
 
 router.post('/create', isAuthenticatedUser, newOrder); 
-router.post('/paymentVerify',  paymentVerify); 
-router.post('/razorpayorder',  createRazorpayOrder); 
+router.post('/paymentVerify', isAuthenticatedUser, paymentVerify); 
+router.post('/razorpayorder',isAuthenticatedUser,  createRazorpayOrder); 
 router.get('/singleOrder/:id', isAuthenticatedUser, getSingleOrder);
 router.get('/myOrders', isAuthenticatedUser, myOrders);
 router.get('/admin/all/orders', isAuthenticatedUser,authorizedRole("admin"), getAllOrders);
