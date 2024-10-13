@@ -17,7 +17,7 @@ const orderSchema = new mongoose_1.default.Schema({
     paymentInfo: {
         method: { type: String, required: true }, // Razorpay or Cash-On-Delivery
         status: { type: String, required: true, default: "Pending" },
-        razorpay_order_id: { type: String }, // Razorpay-specific field
+        razorpay_order_id: { type: String }, // Razorpay-specific field 
         razorpay_payment_id: { type: String }, // Razorpay-specific field
         razorpay_signature: { type: String }, // Razorpay-specific field
     },
@@ -27,7 +27,7 @@ const orderSchema = new mongoose_1.default.Schema({
     shippingPrice: { type: Number, required: true, default: 0 },
     totalPrice: { type: Number, required: true, default: 0 },
     orderStatus: { type: String, required: true, default: 'Processing' },
-    userMessage: { type: String, required: false },
+    userMessage: { type: String, required: false, default: "No Message" },
     isCOD: { type: Boolean, required: true, default: false },
     deliveredAt: Date,
     createdAt: { type: Date, default: Date.now }

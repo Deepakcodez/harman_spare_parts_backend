@@ -25,7 +25,7 @@ const generateReceiptId = (): string => {
 
 export const createRazorpayOrder = async (req: Request, res: Response) => {
   try {
-    const { productId, shippingInfo ,userMessage} = req.body;
+    const { productId, shippingInfo, userMessage } = req.body;
 
     const userId = req.user?._id;
 
@@ -86,7 +86,8 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
           shippingPrice: 0, // Add shipping cost logic if applicable
           totalPrice: product.price,
           orderStatus: "Processing",
-          userMessage
+          isCOD: false,
+          userMessage,
         });
 
         return res.json({
@@ -105,13 +106,101 @@ export const createRazorpayOrder = async (req: Request, res: Response) => {
     });
   }
 };
+
+export const createRazorpayOrderOfCart = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { cartId, shippingInfo, userMessage } = req.body;
+    const userId = req.user?._id; // Assuming req.user is populated with user details via middleware
+
+    // Find the cart by cartId
+    const cart = await Cart.findById(cartId).populate(
+      "products.product.productId"
+    );
+
+    if (!cart) {
+      return res.status(404).json({
+        success: false,
+        message: "Cart not found",
+      });
+    }
+
+    // Verify the total price from the cart
+    const amount = cart.totalPrice;
+
+    // Generate receipt ID for the Razorpay order
+    const receiptId = generateReceiptId();
+
+    // Razorpay order options
+    const options = {
+      amount: amount * 100, // Amount in paise (INR)
+      currency: "INR",
+      receipt: receiptId,
+    };
+
+    const razorpayInstance = createRazorpayInstance();
+
+    // Create the Razorpay order
+    razorpayInstance.orders.create(options, async (error, razorpayOrder) => {
+      if (error) {
+        return res.status(500).json({
+          success: false,
+          message: "Something went wrong while creating the Razorpay order",
+          error,
+        });
+      } else {
+        // Prepare the order items from the cart
+        const orderItems = cart.products.map((cartProduct: any) => ({
+          name: cartProduct.product.productId.name,
+          price: cartProduct.price,
+          quantity: cartProduct.quantity,
+          image: cartProduct.product.productId.images[0].url,
+          product: cartProduct.product.productId._id,
+        }));
+
+        // Create the new order in the database with the Razorpay order ID
+        const newOrder = await Order.create({
+          shippingInfo,
+          user: userId,
+          orderItems,
+          paymentInfo: {
+            method: "Online-Payment",
+            status: "Pending",
+            razorpay_order_id: razorpayOrder.id,
+          },
+          itemsPrice: cart.totalPrice,
+          taxPrice: 0, // Add tax logic if applicable
+          shippingPrice: 0, // Add shipping cost logic if applicable
+          totalPrice: cart.totalPrice,
+          orderStatus: "Processing",
+          isCOD: false, // Since it's an online payment
+          userMessage,
+        });
+
+        return res.json({
+          success: true,
+          message: "Razorpay order created successfully",
+          razorpayOrder, // Razorpay order details
+          orderDetails: newOrder, // Newly created order details
+        });
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: "Order creation failed",
+      error,
+    });
+  }
+};
+
 export const paymentVerify = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
         req.body;
-
-      
 
       // 1. Check if all the necessary data is provided
       if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
@@ -137,16 +226,26 @@ export const paymentVerify = asyncHandler(
 
       if (isAuthentic) {
         // Payment is authentic
+        const order = await Order.findOne({
+          "paymentInfo.razorpay_order_id": razorpay_order_id,
+        });
+
+        if (!order) {
+          return next(new ErrorHandler("Order not found", 404));
+        }
 
         // 5. Save payment info in the database
         await Payment.create({
+          order: order._id,
+          user: req.user?._id,
+          amount: order.totalPrice,
           razorpay_order_id,
           razorpay_payment_id,
           razorpay_signature,
         });
 
-         // 6. Update the Order with the payment details
-         const updatedOrder = await Order.findOneAndUpdate(
+        // 6. Update the Order with the payment details
+        const updatedOrder = await Order.findOneAndUpdate(
           { "paymentInfo.razorpay_order_id": razorpay_order_id },
           {
             $set: {
@@ -170,7 +269,6 @@ export const paymentVerify = asyncHandler(
           success: true,
           message: "Payment Verified",
         });
-
       } else {
         // Signature mismatch
         res.status(400).json({
@@ -185,8 +283,6 @@ export const paymentVerify = asyncHandler(
   }
 );
 
-  
-
 export const newOrder = asyncHandler(
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const userId = req.user?._id;
@@ -198,10 +294,17 @@ export const newOrder = asyncHandler(
       taxPrice,
       shippingPrice,
       totalPrice,
-      userMessage
+      userMessage,
+      isCartOrder,
     } = req.body;
 
-    console.log('>>>>>>>>>>>', orderItems,paymentInfo,totalPrice,userMessage)
+    console.log(
+      ">>>>>>>>>>>",
+      orderItems,
+      paymentInfo,
+      totalPrice,
+      userMessage
+    );
 
     const order = await Order.create({
       shippingInfo,
@@ -212,23 +315,28 @@ export const newOrder = asyncHandler(
       shippingPrice,
       totalPrice,
       userMessage,
-      isCOD:true,
+      isCOD: true,
       paidAt: Date.now(),
       user: req.user?._id,
     });
     const populatedOrder = await order.populate("user");
 
-    // await User.updateOne(
-    //   { _id: userId },
-    //   { $push: { myOrders: populatedOrder?._id } }
-    // );
-    // //empty the cart
-    // await Cart.updateOne({userId}, {
-    //   $set: {
-    //     products: [],
-    //     totalPrice: 0,
-    //   },
-    // });
+    if (isCartOrder) {
+      await User.updateOne(
+        { _id: userId },
+        { $push: { myOrders: populatedOrder?._id } }
+      );
+      ///empty the cart
+      await Cart.updateOne(
+        { userId },
+        {
+          $set: {
+            products: [],
+            totalPrice: 0,
+          },
+        }
+      );
+    }
 
     res.status(201).json({
       success: true,
@@ -236,11 +344,6 @@ export const newOrder = asyncHandler(
     });
   }
 );
-
-
-
-
-
 
 // get Single Order
 export const getSingleOrder = asyncHandler(

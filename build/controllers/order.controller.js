@@ -12,16 +12,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateOrder = exports.deleteOrder = exports.getAllOrders = exports.myOrders = exports.getSingleOrder = exports.paymentVerify = exports.newOrder = exports.createRazorpayOrder = void 0;
+exports.updateOrder = exports.deleteOrder = exports.getAllOrders = exports.myOrders = exports.getSingleOrder = exports.newOrder = exports.paymentVerify = exports.createRazorpayOrderOfCart = exports.createRazorpayOrder = void 0;
 const asyncHandler_1 = __importDefault(require("../middleware/asyncHandler"));
 const order_model_1 = __importDefault(require("../model/order.model"));
 const errorHandler_1 = require("../utils/errorHandler");
 const product_model_1 = __importDefault(require("../model/product.model"));
-const razorpay_1 = __importDefault(require("razorpay"));
 const crypto_1 = __importDefault(require("crypto"));
 const payment_model_1 = __importDefault(require("../model/payment.model"));
 const user_model_1 = __importDefault(require("../model/user.model"));
 const cart_model_1 = __importDefault(require("../model/cart.model"));
+const razorpay_config_1 = require("../utils/razorpay.config");
 const keyId = process.env.RAZORPAY_ID;
 const keySecret = process.env.RAZORPAY_SECRET;
 // Function to generate a random receipt ID
@@ -29,187 +29,214 @@ const generateReceiptId = () => {
     return crypto_1.default.randomBytes(16).toString("hex");
 };
 const createRazorpayOrder = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a;
     try {
-        const { amount } = req.body; // Amount from frontend (in paisa)
-        console.log('>>>>>>>>>>>', amount, keyId, keySecret);
-        if (!keyId || !keySecret) {
-            throw new Error("Razorpay key ID or key secret is not defined in environment variables");
+        const { productId, shippingInfo, userMessage } = req.body;
+        const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
+        // Find the product by productId from the database
+        const product = yield product_model_1.default.findById(productId);
+        if (!product) {
+            return res.status(404).json({
+                success: false,
+                message: "Product not found",
+            });
         }
-        const receiptId = generateReceiptId(); // Generate unique receipt ID
+        // Verify the actual price of the product stored in the database
+        const amount = product.price;
+        // Generate receipt ID for the Razorpay order
+        const receiptId = generateReceiptId();
+        // Razorpay order options
         const options = {
-            amount: amount,
+            amount: amount * 100, // Amount in paise (INR)
             currency: "INR",
             receipt: receiptId,
         };
-        const razorpay = new razorpay_1.default({
-            key_id: keyId,
-            key_secret: keySecret,
-        });
+        const razorpayInstance = (0, razorpay_config_1.createRazorpayInstance)();
         // Create the Razorpay order
-        const razorpayOrder = yield razorpay.orders.create(options);
-        res.json({
-            success: true,
-            orderId: razorpayOrder.id,
-            amount: amount,
-        });
+        razorpayInstance.orders.create(options, (error, razorpayOrder) => __awaiter(void 0, void 0, void 0, function* () {
+            if (error) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Something went wrong while creating the Razorpay order",
+                    error,
+                });
+            }
+            else {
+                // Create the new order in the database with the Razorpay order ID
+                const newOrder = yield order_model_1.default.create({
+                    shippingInfo,
+                    user: userId,
+                    orderItems: [
+                        {
+                            name: product.name,
+                            price: product.price,
+                            quantity: 1,
+                            image: product.images[0].url,
+                            product: product._id,
+                        },
+                    ],
+                    paymentInfo: {
+                        method: "Online-Payment",
+                        status: "Pending",
+                        razorpay_order_id: razorpayOrder.id,
+                    },
+                    itemsPrice: product.price,
+                    taxPrice: 0, // Add tax logic if applicable
+                    shippingPrice: 0, // Add shipping cost logic if applicable
+                    totalPrice: product.price,
+                    orderStatus: "Processing",
+                    isCOD: false,
+                    userMessage,
+                });
+                return res.json({
+                    success: true,
+                    message: "Razorpay order created successfully",
+                    razorpayOrder, // Razorpay order details
+                    // Newly created order details
+                });
+            }
+        }));
     }
     catch (error) {
-        res.status(500).json({ success: false, message: "Order creation failed", error });
+        res.status(500).json({
+            success: false,
+            message: "Order creation failed",
+            error,
+        });
     }
 });
 exports.createRazorpayOrder = createRazorpayOrder;
-// Create new Order
-exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _a, _b, _c, _d;
-    const { shippingInfo, orderItems, itemsPrice, taxPrice, shippingPrice, totalPrice, userMessage, paymentInfo, } = req.body;
-    const userId = (_a = req.user) === null || _a === void 0 ? void 0 : _a._id;
-    const paymentMethod = paymentInfo.method;
-    console.log(">>>>>>>>>>>inside new order controller");
+const createRazorpayOrderOfCart = (req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    var _b;
     try {
-        // Check if payment method is Online Payment and handle Razorpay order creation
-        if (paymentMethod === "online") {
-            // Create the order in the database
-            const order = yield order_model_1.default.create({
-                shippingInfo,
-                orderItems,
-                paymentInfo,
-                itemsPrice,
-                taxPrice,
-                userMessage,
-                shippingPrice,
-                totalPrice,
-                paidAt: Date.now(), // Razorpay doesn't confirm payment instantly
-                user: (_b = req.user) === null || _b === void 0 ? void 0 : _b._id,
-            });
-            const populatedOrder = yield order.populate("user");
-            res.status(201).json({
-                success: true,
-                order: populatedOrder,
-            });
-        }
-        else if (paymentMethod === "cod") {
-            // If payment method is COD, place the order without Razorpay
-            let paymentInfoData = {
-                method: "Cash-On-Delivery",
-                status: "Pending", // Status is pending for COD orders
-            };
-            const order = yield order_model_1.default.create({
-                shippingInfo,
-                orderItems,
-                paymentInfo: paymentInfoData,
-                itemsPrice,
-                taxPrice,
-                shippingPrice,
-                totalPrice,
-                userMessage,
-                paidAt: null, // Will be null since it's not paid yet (COD)
-                user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id,
-            });
-            const populatedOrder = yield order.populate("user");
-            yield user_model_1.default.updateOne({ _id: (_d = req.user) === null || _d === void 0 ? void 0 : _d._id }, { $push: { myOrders: populatedOrder === null || populatedOrder === void 0 ? void 0 : populatedOrder._id } });
-            //empty the cart
-            yield cart_model_1.default.updateOne({ userId }, {
-                $set: {
-                    products: [],
-                    totalPrice: 0,
-                },
-            });
-            res.status(201).json({
-                success: true,
-                order: populatedOrder,
-                message: "Order placed with Cash on Delivery",
-            });
-        }
-        else {
-            // If payment method is invalid, return an error
-            res.status(400).json({
+        const { cartId, shippingInfo, userMessage } = req.body;
+        const userId = (_b = req.user) === null || _b === void 0 ? void 0 : _b._id; // Assuming req.user is populated with user details via middleware
+        // Find the cart by cartId
+        const cart = yield cart_model_1.default.findById(cartId).populate("products.product.productId");
+        if (!cart) {
+            return res.status(404).json({
                 success: false,
-                message: "Invalid payment method",
+                message: "Cart not found",
             });
         }
+        // Verify the total price from the cart
+        const amount = cart.totalPrice;
+        // Generate receipt ID for the Razorpay order
+        const receiptId = generateReceiptId();
+        // Razorpay order options
+        const options = {
+            amount: amount * 100, // Amount in paise (INR)
+            currency: "INR",
+            receipt: receiptId,
+        };
+        const razorpayInstance = (0, razorpay_config_1.createRazorpayInstance)();
+        // Create the Razorpay order
+        razorpayInstance.orders.create(options, (error, razorpayOrder) => __awaiter(void 0, void 0, void 0, function* () {
+            if (error) {
+                return res.status(500).json({
+                    success: false,
+                    message: "Something went wrong while creating the Razorpay order",
+                    error,
+                });
+            }
+            else {
+                // Prepare the order items from the cart
+                const orderItems = cart.products.map((cartProduct) => ({
+                    name: cartProduct.product.productId.name,
+                    price: cartProduct.price,
+                    quantity: cartProduct.quantity,
+                    image: cartProduct.product.productId.images[0].url,
+                    product: cartProduct.product.productId._id,
+                }));
+                // Create the new order in the database with the Razorpay order ID
+                const newOrder = yield order_model_1.default.create({
+                    shippingInfo,
+                    user: userId,
+                    orderItems,
+                    paymentInfo: {
+                        method: "Online-Payment",
+                        status: "Pending",
+                        razorpay_order_id: razorpayOrder.id,
+                    },
+                    itemsPrice: cart.totalPrice,
+                    taxPrice: 0, // Add tax logic if applicable
+                    shippingPrice: 0, // Add shipping cost logic if applicable
+                    totalPrice: cart.totalPrice,
+                    orderStatus: "Processing",
+                    isCOD: false, // Since it's an online payment
+                    userMessage,
+                });
+                return res.json({
+                    success: true,
+                    message: "Razorpay order created successfully",
+                    razorpayOrder, // Razorpay order details
+                    orderDetails: newOrder, // Newly created order details
+                });
+            }
+        }));
     }
     catch (error) {
-        console.error("Error creating order:", error);
         res.status(500).json({
             success: false,
-            message: "Unable to create order. Please try again.",
+            message: "Order creation failed",
+            error,
         });
     }
-}));
-// export const newOrder = asyncHandler(
-//   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-//     const userId = req.user?._id;
-//     const {
-//       shippingInfo,
-//       orderItems,
-//       itemsPrice,
-//       paymentInfo,
-//       taxPrice,
-//       shippingPrice,
-//       totalPrice,
-//       userMessagehttp://localhost:3000/
-//     } = req.body;
-//     const order = await Order.create({
-//       shippingInfo,
-//       orderItems,
-//       paymentInfo,
-//       itemsPrice,
-//       taxPrice,
-//       shippingPrice,
-//       totalPrice,
-//       userMessage,
-//       paidAt: Date.now(),
-//       user: req.user?._id,
-//     });
-//     const populatedOrder = await order.populate("user");
-//     await User.updateOne(
-//       { _id: userId },
-//       { $push: { myOrders: populatedOrder?._id } }
-//     );
-//     //empty the cart
-//     await Cart.updateOne({userId}, {
-//       $set: {
-//         products: [],
-//         totalPrice: 0,
-//       },
-//     });
-//     res.status(201).json({
-//       success: true,
-//       order: populatedOrder,
-//     });
-//   }
-// );
+});
+exports.createRazorpayOrderOfCart = createRazorpayOrderOfCart;
 exports.paymentVerify = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _c;
     try {
         const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
         // 1. Check if all the necessary data is provided
         if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
             return next(new errorHandler_1.ErrorHandler("Missing payment details", 400));
         }
-        // 2. Create body string to verify signature
-        const body = razorpay_order_id + "|" + razorpay_payment_id;
-        // 3. Generate expected signature using HMAC SHA256
-        const expectedSignature = crypto_1.default
-            .createHmac("sha256", process.env.RAZORPAY_SECRET)
-            .update(body)
-            .digest("hex");
+        const secret = process.env.RAZORPAY_SECRET;
+        console.log(">>>>>>>>>>> secret", secret);
+        //create hmac object
+        const hmac = crypto_1.default.createHmac("sha256", secret);
+        hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+        const generateSignature = hmac.digest("hex");
+        console.log(">>>>>>>>>>> generateSignature", generateSignature);
         // 4. Verify if the signature matches
-        const isAuthentic = expectedSignature === razorpay_signature;
+        const isAuthentic = generateSignature === razorpay_signature;
+        console.log(">>>>>>>>>>> authenticated", isAuthentic);
         if (isAuthentic) {
             // Payment is authentic
+            const order = yield order_model_1.default.findOne({
+                "paymentInfo.razorpay_order_id": razorpay_order_id,
+            });
+            if (!order) {
+                return next(new errorHandler_1.ErrorHandler("Order not found", 404));
+            }
             // 5. Save payment info in the database
             yield payment_model_1.default.create({
+                order: order._id,
+                user: (_c = req.user) === null || _c === void 0 ? void 0 : _c._id,
+                amount: order.totalPrice,
                 razorpay_order_id,
                 razorpay_payment_id,
                 razorpay_signature,
             });
-            // 6. Update the order with success status
-            const updatedOrder = yield order_model_1.default.findOneAndUpdate({ "paymentInfo.razorpay_order_id": razorpay_order_id }, { $set: { "paymentInfo.status": "Success" } }, { new: true });
+            // 6. Update the Order with the payment details
+            const updatedOrder = yield order_model_1.default.findOneAndUpdate({ "paymentInfo.razorpay_order_id": razorpay_order_id }, {
+                $set: {
+                    "paymentInfo.razorpay_payment_id": razorpay_payment_id,
+                    "paymentInfo.razorpay_signature": razorpay_signature,
+                    "paymentInfo.status": "Success", // Mark payment as successful
+                    paidAt: new Date(), // Update payment date to now
+                },
+            }, { new: true });
             if (!updatedOrder) {
                 return next(new errorHandler_1.ErrorHandler("Order not found", 404));
             }
+            console.log(">>>>>>>>>>> updatedOrder", updatedOrder);
             // 7. Redirect to the success page with payment reference
-            res.redirect(`http://localhost:3000/products?reference=${razorpay_payment_id}`);
+            res.status(201).json({
+                success: true,
+                message: "Payment Verified",
+            });
         }
         else {
             // Signature mismatch
@@ -224,6 +251,40 @@ exports.paymentVerify = (0, asyncHandler_1.default)((req, res, next) => __awaite
         next(new errorHandler_1.ErrorHandler("Internal server error", 500));
     }
 }));
+exports.newOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
+    var _d, _e;
+    const userId = (_d = req.user) === null || _d === void 0 ? void 0 : _d._id;
+    const { shippingInfo, orderItems, itemsPrice, paymentInfo, taxPrice, shippingPrice, totalPrice, userMessage, isCartOrder, } = req.body;
+    console.log(">>>>>>>>>>>", orderItems, paymentInfo, totalPrice, userMessage);
+    const order = yield order_model_1.default.create({
+        shippingInfo,
+        orderItems,
+        paymentInfo,
+        itemsPrice,
+        taxPrice,
+        shippingPrice,
+        totalPrice,
+        userMessage,
+        isCOD: true,
+        paidAt: Date.now(),
+        user: (_e = req.user) === null || _e === void 0 ? void 0 : _e._id,
+    });
+    const populatedOrder = yield order.populate("user");
+    if (isCartOrder) {
+        yield user_model_1.default.updateOne({ _id: userId }, { $push: { myOrders: populatedOrder === null || populatedOrder === void 0 ? void 0 : populatedOrder._id } });
+        ///empty the cart
+        yield cart_model_1.default.updateOne({ userId }, {
+            $set: {
+                products: [],
+                totalPrice: 0,
+            },
+        });
+    }
+    res.status(201).json({
+        success: true,
+        order: populatedOrder,
+    });
+}));
 // get Single Order
 exports.getSingleOrder = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
     const order = yield order_model_1.default.findById(req.params.id).populate("user", "name email");
@@ -237,8 +298,8 @@ exports.getSingleOrder = (0, asyncHandler_1.default)((req, res, next) => __await
 }));
 // get logged in user  Orders
 exports.myOrders = (0, asyncHandler_1.default)((req, res, next) => __awaiter(void 0, void 0, void 0, function* () {
-    var _e;
-    const orders = yield order_model_1.default.find({ user: (_e = req.user) === null || _e === void 0 ? void 0 : _e._id }).populate("user");
+    var _f;
+    const orders = yield order_model_1.default.find({ user: (_f = req.user) === null || _f === void 0 ? void 0 : _f._id }).populate("user");
     res.status(200).json({
         success: true,
         orders,
