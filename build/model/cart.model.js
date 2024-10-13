@@ -35,8 +35,7 @@ const productSchema = new mongoose_1.Schema({
         required: true,
         default: 1,
     },
-}, { _id: false } // Disable the generation of `_id` for subdocuments
-);
+}, { _id: false });
 const cartProductSchema = new mongoose_1.Schema({
     product: {
         type: productSchema,
